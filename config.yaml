@@ -1,5 +1,5 @@
 port: 80
-static_dir: "./web/statics"     # For linux we recommend "/var/web/statics"
-html_dir: "./web/html"          # For linux we recommend "/var/web/html"
+static_dir: "./web/statics"     # For linux we recommend "/var/web/plannet/statics"
+html_dir: "./web/html"          # For linux we recommend "/var/web/plannet/html"
 authed_path_name: "/c"
 db_root_dir: "./xmldb"          # For linux we recommend "/var/xmldb"
