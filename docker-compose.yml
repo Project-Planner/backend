@@ -1,0 +1,15 @@
+version: "3"
+
+services:
+  plannet:
+    build: "."
+    container_name: "plannet"
+    restart: "unless-stopped"
+    ports:
+      - "80:80/tcp" # remember to change the both ports according to the config
+    volumes:
+      - "/var/web/plannet/statics:/var/web/plannet/statics" # remember to change the latter according to your config
+      - "/var/web/plannet/html:/var/web/plannet/html" # read this ^
+      - "/var/xmldb:/var/xmldb"                      # read this ^
+      - "./config.yaml:/config.yaml" # DO NOT TOUCH THIS
+    environment:

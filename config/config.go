@@ -8,6 +8,6 @@ import (
 // Config of the project, embedding all sub-configs
 type Config struct {
 	// here go the config fields and embedded configs of other packages
-	web.ServerConfig
-	xmldb.DBConfig
+	web.ServerConfig `yaml:",inline"`
+	xmldb.DBConfig   `yaml:",inline"`
 }
