@@ -1,6 +1,7 @@
 package web
 
 import (
+	"errors"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
 	"time"
@@ -24,4 +25,15 @@ func createToken(userid string) (string, error) {
 
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, c)
 	return t.SignedString(conf.JWTSecret)
+}
+
+func parseTokenAndVerifySignature(tokenString string) (*jwt.Token, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("jwt: signing method not correct")
+		}
+
+		return conf.JWTSecret, nil
+	})
+	return token, err
 }

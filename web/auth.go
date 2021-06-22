@@ -62,3 +62,19 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
+
+// deleteCookie deletes the given cookie WITHOUT modifying the provided cookie, even though it is a pointer.
+func deleteCookie(w http.ResponseWriter, c *http.Cookie) {
+	delC := http.Cookie{
+		Name:       c.Name,
+		Value:      "",
+		Path:       c.Path,
+		Domain:     c.Domain,
+		Expires:    time.Now().Add(-7 * 24 * time.Hour), // THIS DELETES THE COOKIE
+		MaxAge:     -1, // Tells browser to delete cookie NOW, but doesn't work with IE, hence 'Expires'
+		HttpOnly:   c.HttpOnly,
+		SameSite:   c.SameSite,
+	}
+
+	http.SetCookie(w, &delC)
+}
