@@ -1,3 +1,64 @@
 package web
 
-// Do authentication stuff here and call the function in middleware.go:auth
+import (
+	"errors"
+	"github.com/Project-Planner/backend/model"
+	"golang.org/x/crypto/bcrypt"
+	"log"
+	"net/http"
+	"time"
+)
+
+func loginHandler(w http.ResponseWriter, r *http.Request) {
+	// Parse HTML form from body
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	uns, ok := r.Form["username"]
+	if !ok || len(uns) != 1{
+		http.Error(w, "username missing, html input must have name 'username'", http.StatusUnprocessableEntity)
+	}
+	pws, ok := r.Form["password"]
+	if !ok || len(pws) != 1{
+		http.Error(w, "password missing, html input must have name 'password'", http.StatusUnprocessableEntity)
+	}
+
+	username := uns[0]
+	pw := pws[0]
+
+	errIncorrect := errors.New("username or password incorrect")
+
+	l, err := db.GetLogin(username)
+	if err == model.ErrNotFound {
+		http.Error(w, errIncorrect.Error(), http.StatusUnauthorized)
+		return
+	} else if err != nil {
+		http.Error(w, "", http.StatusInternalServerError)
+		log.Println(err)
+		return
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(l.Hash.Val), []byte(pw)); err != nil {
+		http.Error(w, errIncorrect.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	t, err := createToken(username)
+	if err != nil {
+		http.Error(w, "", http.StatusInternalServerError)
+		log.Println(err)
+		return
+	}
+
+	c := http.Cookie{
+		Name:       "auth",
+		Value:      t,
+		Expires:    time.Now().Add(time.Hour * 365 * 24),
+		HttpOnly:   true,
+	}
+	http.SetCookie(w, &c)
+
+	w.WriteHeader(http.StatusOK)
+}

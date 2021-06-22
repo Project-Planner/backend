@@ -35,6 +35,8 @@ func registerRoutes(r *mux.Router) {
 	// Example of registering a function to the route "domain.tld/me/calendars", if conf.AuthedPathName = "/me":
 	// authed.HandleFunc("/calendars", calandarsHandler)
 
+	r.HandleFunc("/authorize", loginHandler).Methods("POST")
+
 	// serve static files (index, impressum, login, register ...). Note that this has to be registered last.
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir(conf.StaticDir)))
 }
