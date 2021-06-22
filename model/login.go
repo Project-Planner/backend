@@ -10,8 +10,4 @@ type Login struct {
 		Text string `xml:",chardata"`
 		Val  string `xml:"val,attr"`
 	} `xml:"hash"`
-	JWTs struct {
-		Text string `xml:",chardata"`
-		JWTs []JWT  `xml:"jwt"`
-	} `xml:"jwts"`
 }
