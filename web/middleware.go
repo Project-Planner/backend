@@ -1,8 +1,8 @@
 package web
 
 import (
+	"context"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/gorilla/context"
 	"log"
 	"net/http"
 	"time"
@@ -51,9 +51,9 @@ func auth(next http.Handler) http.Handler {
 			}
 
 			// Sets the verified user context, this user is authenticated
-			context.Set(r, "userID", userID)
+			ctx := context.WithValue(r.Context(), "userID", userID)
 
 			// executes the next function in the chain. Do not remove this.
-			next.ServeHTTP(w, r)
+			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 }
