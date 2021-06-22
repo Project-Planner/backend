@@ -60,7 +60,20 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	http.SetCookie(w, &c)
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusOK) // possibly redirect to another page later
+}
+
+func logoutHandler(w http.ResponseWriter, r *http.Request) {
+	c, err := r.Cookie("auth")
+	if err != nil {
+		http.Error(w, "no authentication token (jwt) provided, please log in.\n" + err.Error(),
+			http.StatusUnauthorized)
+		return
+	}
+
+	deleteCookie(w, c)
+
+	w.WriteHeader(http.StatusOK) // possibly redirect to another page later
 }
 
 // deleteCookie deletes the given cookie WITHOUT modifying the provided cookie, even though it is a pointer.

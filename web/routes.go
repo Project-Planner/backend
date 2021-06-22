@@ -34,6 +34,7 @@ func registerRoutes(r *mux.Router) {
 
 	// Example of registering a function to the route "domain.tld/me/calendars", if conf.AuthedPathName = "/me":
 	// authed.HandleFunc("/calendars", calandarsHandler)
+	authed.HandleFunc("/logout", logoutHandler)
 
 	r.HandleFunc("/authorize", loginHandler).Methods("POST")
 
