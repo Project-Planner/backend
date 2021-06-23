@@ -219,11 +219,111 @@ func TestLoginHandler(t *testing.T) {
 	}
 }
 
+func TestRegisterHandler(t *testing.T) {
+	un := "nickname"
+	pw := "mypw"
+
+	okDB := dbMock{data: map[string]struct {
+		d interface{}
+		e error
+	}{
+		"GetLogin": {
+			d: model.Login{
+				Name: struct {
+					Text string `xml:",chardata"`
+					Val  string `xml:"val,attr"`
+				}{Val: un},
+			},
+		},
+	}}
+
+	tt := []struct {
+		un   string
+		pw   string
+		db   dbMock
+		code int
+	}{
+		// Kosher case
+		{
+			un:   "otherUsername",
+			pw:   pw,
+			db:   okDB,
+			code: http.StatusCreated,
+		},
+		// Username already exists
+		{
+			un:   un,
+			pw:   pw,
+			db:   okDB,
+			code: http.StatusConflict,
+		},
+		// Database issue while getting user
+		{
+			un: un,
+			pw: pw,
+			db: dbMock{data: map[string]struct {
+				d interface{}
+				e error
+			}{
+				"GetLogin": {
+					d: model.Login{},
+					e: errors.New("whupsi, some error"),
+				},
+			}},
+			code: http.StatusInternalServerError,
+		},
+		// Database issue while adding user
+		{
+			un: un,
+			pw: pw,
+			db: dbMock{data: map[string]struct {
+				d interface{}
+				e error
+			}{
+				"GetLogin": {
+					e: model.ErrNotFound,
+				},
+				"AddUser": {
+					e: errors.New("whupsi, some error"),
+				},
+			}},
+			code: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tc := range tt {
+		db = tc.db
+
+		data := url.Values{}
+		data.Set("password", tc.pw)
+		data.Set("username", tc.un)
+
+		r, err := http.NewRequest("POST", "/authorize", strings.NewReader(data.Encode()))
+		if err != nil {
+			t.Fatal(err)
+		}
+		r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(registerHandler)
+
+		handler.ServeHTTP(rr, r)
+
+		if rr.Code != tc.code {
+			t.Fatalf("wrong status code: got: %d want: %d \n%s\n%v", rr.Code, tc.code, rr.Body.String(), tc)
+		}
+	}
+}
+
 type dbMock struct {
 	data map[string]struct {
 		d interface{}
 		e error
 	}
+}
+
+func (d dbMock) AddUser(userid, hashedPW string) error {
+	return d.data["AddUser"].e
 }
 
 func (d dbMock) GetLogin(userid string) (model.Login, error) {
