@@ -2,9 +2,11 @@ package web
 
 import (
 	"context"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -14,7 +16,7 @@ func auth(next http.Handler) http.Handler {
 		func(w http.ResponseWriter, r *http.Request) {
 			c, err := r.Cookie(authStr)
 			if err != nil {
-				http.Error(w, "no authentication token (jwt) provided, please log in.\n" + err.Error(),
+				http.Error(w, "no authentication token (jwt) provided, please log in.\n"+err.Error(),
 					http.StatusUnauthorized)
 				return
 			}
@@ -39,8 +41,8 @@ func auth(next http.Handler) http.Handler {
 				return
 			}
 			exp, ok := claims[expiryStr]
-			expiry, cast := exp.(int64)
-			if !ok || !cast {
+			expiry, err := strconv.ParseInt(fmt.Sprintf("%.f", exp), 10, 64)
+			if !ok || err != nil {
 				http.Error(w, "expiry date missing", http.StatusUnauthorized)
 				return
 			}
