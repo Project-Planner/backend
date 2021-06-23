@@ -17,12 +17,14 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	uns, ok := r.Form["username"]
-	if !ok || len(uns) != 1{
+	if !ok || len(uns) != 1 {
 		http.Error(w, "username missing, html input must have name 'username'", http.StatusUnprocessableEntity)
+		return
 	}
 	pws, ok := r.Form["password"]
-	if !ok || len(pws) != 1{
+	if !ok || len(pws) != 1 {
 		http.Error(w, "password missing, html input must have name 'password'", http.StatusUnprocessableEntity)
+		return
 	}
 
 	username := uns[0]
@@ -53,10 +55,10 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c := http.Cookie{
-		Name:       authStr,
-		Value:      t,
-		Expires:    time.Now().Add(time.Hour * 365 * 24),
-		HttpOnly:   true,
+		Name:     authStr,
+		Value:    t,
+		Expires:  time.Now().Add(time.Hour * 365 * 24),
+		HttpOnly: true,
 	}
 	http.SetCookie(w, &c)
 
@@ -66,7 +68,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
 	c, err := r.Cookie(authStr)
 	if err != nil {
-		http.Error(w, "no authentication token (jwt) provided, please log in.\n" + err.Error(),
+		http.Error(w, "no authentication token (jwt) provided, please log in.\n"+err.Error(),
 			http.StatusUnauthorized)
 		return
 	}
@@ -79,14 +81,14 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 // deleteCookie deletes the given cookie WITHOUT modifying the provided cookie, even though it is a pointer.
 func deleteCookie(w http.ResponseWriter, c *http.Cookie) {
 	delC := http.Cookie{
-		Name:       c.Name,
-		Value:      "",
-		Path:       c.Path,
-		Domain:     c.Domain,
-		Expires:    time.Now().Add(-7 * 24 * time.Hour), // THIS DELETES THE COOKIE
-		MaxAge:     -1, // Tells browser to delete cookie NOW, but doesn't work with IE, hence 'Expires'
-		HttpOnly:   c.HttpOnly,
-		SameSite:   c.SameSite,
+		Name:     c.Name,
+		Value:    "",
+		Path:     c.Path,
+		Domain:   c.Domain,
+		Expires:  time.Now().Add(-7 * 24 * time.Hour), // THIS DELETES THE COOKIE
+		MaxAge:   -1,                                  // Tells browser to delete cookie NOW, but doesn't work with IE, hence 'Expires'
+		HttpOnly: c.HttpOnly,
+		SameSite: c.SameSite,
 	}
 
 	http.SetCookie(w, &delC)
