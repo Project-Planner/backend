@@ -12,7 +12,7 @@ import (
 func auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			c, err := r.Cookie("auth")
+			c, err := r.Cookie(authStr)
 			if err != nil {
 				http.Error(w, "no authentication token (jwt) provided, please log in.\n" + err.Error(),
 					http.StatusUnauthorized)
@@ -32,13 +32,13 @@ func auth(next http.Handler) http.Handler {
 				return
 			}
 
-			uid, ok := claims["user_id"]
+			uid, ok := claims[userIDStr]
 			userID, cast := uid.(string)
 			if !ok || !cast {
 				http.Error(w, "user_id missing", http.StatusUnauthorized)
 				return
 			}
-			exp, ok := claims["expiry"]
+			exp, ok := claims[expiryStr]
 			expiry, cast := exp.(int64)
 			if !ok || !cast {
 				http.Error(w, "expiry date missing", http.StatusUnauthorized)
@@ -51,7 +51,7 @@ func auth(next http.Handler) http.Handler {
 			}
 
 			// Sets the verified user context, this user is authenticated
-			ctx := context.WithValue(r.Context(), "userID", userID)
+			ctx := context.WithValue(r.Context(), userIDStr, userID)
 
 			// executes the next function in the chain. Do not remove this.
 			next.ServeHTTP(w, r.WithContext(ctx))

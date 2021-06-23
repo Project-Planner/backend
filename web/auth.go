@@ -53,7 +53,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c := http.Cookie{
-		Name:       "auth",
+		Name:       authStr,
 		Value:      t,
 		Expires:    time.Now().Add(time.Hour * 365 * 24),
 		HttpOnly:   true,
@@ -64,7 +64,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
-	c, err := r.Cookie("auth")
+	c, err := r.Cookie(authStr)
 	if err != nil {
 		http.Error(w, "no authentication token (jwt) provided, please log in.\n" + err.Error(),
 			http.StatusUnauthorized)

@@ -14,14 +14,14 @@ func createToken(userid string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	tokenID := id.String()
+	tkID := id.String()
 	exp := time.Now().Add(time.Hour * 365 * 24).Unix()
 
 	c := jwt.MapClaims{}
-	c["authorized"] = true
-	c["token_id"] = tokenID
-	c["user_id"] = userid
-	c["expiry"] = exp
+	c[authorizedStr] = true
+	c[tokenIDStr] = tkID
+	c[userIDStr] = userid
+	c[expiryStr] = exp
 
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, c)
 	return t.SignedString(conf.JWTSecret)
