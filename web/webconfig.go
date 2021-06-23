@@ -11,4 +11,6 @@ type ServerConfig struct {
 	HTMLDir string `yaml:"html_dir"`
 	// AuthedPathName - Path prefix of routes requiring authentication
 	AuthedPathName string `yaml:"authed_path_name"`
+	// JWTSecret contains the private, server-sided secret to sign JWTs
+	JWTSecret string `yaml:"jwt_secret"`
 }
