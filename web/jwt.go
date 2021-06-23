@@ -24,7 +24,7 @@ func createToken(userid string) (string, error) {
 	c[expiryStr] = exp
 
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, c)
-	return t.SignedString(conf.JWTSecret)
+	return t.SignedString([]byte(conf.JWTSecret))
 }
 
 func parseTokenAndVerifySignature(tokenString string) (*jwt.Token, error) {
@@ -33,7 +33,7 @@ func parseTokenAndVerifySignature(tokenString string) (*jwt.Token, error) {
 			return nil, errors.New("jwt: signing method not correct")
 		}
 
-		return conf.JWTSecret, nil
+		return []byte(conf.JWTSecret), nil
 	})
 	return token, err
 }
