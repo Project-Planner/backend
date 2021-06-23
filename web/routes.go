@@ -36,7 +36,8 @@ func registerRoutes(r *mux.Router) {
 	// authed.HandleFunc("/calendars", calandarsHandler)
 	authed.HandleFunc("/logout", logoutHandler)
 
-	r.HandleFunc("/authorize", loginHandler).Methods("POST")
+	r.HandleFunc("/api/login", loginHandler).Methods("POST")
+	r.HandleFunc("/api/register", registerHandler).Methods("POST")
 
 	// serve static files (index, impressum, login, register ...). Note that this has to be registered last.
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir(conf.StaticDir)))
