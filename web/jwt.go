@@ -15,7 +15,7 @@ func createToken(userid string) (string, error) {
 		return "", err
 	}
 	tkID := id.String()
-	exp := time.Now().Add(time.Hour * 365 * 24).Unix()
+	exp := time.Now().Add(jwtDuration).Unix()
 
 	c := jwt.MapClaims{}
 	c[authorizedStr] = true

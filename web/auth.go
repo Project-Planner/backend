@@ -57,7 +57,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	c := http.Cookie{
 		Name:     authStr,
 		Value:    t,
-		Expires:  time.Now().Add(time.Hour * 365 * 24),
+		Expires:  time.Now().Add(jwtDuration),
 		HttpOnly: true,
 	}
 	http.SetCookie(w, &c)
