@@ -10,4 +10,8 @@ type Database interface {
 	//GetLogin returns the login data (username, hashed pw) for the specified user, an model.ErrNotFound if the user
 	// could not be found, or an error if something went wrong internally
 	GetLogin(userid string) (model.Login, error)
+
+	// AddUser adds a user with the provided username and hashedPW to the persistence layer. It returns an error if
+	// the user ist not added. (Keep in mind to add a login to the auth file and to the user file).
+	AddUser(userid, hashedPW string) error
 }
