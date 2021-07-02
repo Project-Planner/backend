@@ -18,10 +18,11 @@ func main() {
 	}
 
 	// Create database implementation
-	db, err := xmldb.New(c.DBConfig)
+	db, err := xmldb.NewDatabase(c.DBConfig)
 	if err != nil {
 		log.Fatal(err)
 	}
+	db.AddUser("Lukas", "bla")
 
 	// Start web server
 	web.ListenAndServe(db, c.ServerConfig)

@@ -1,6 +1,8 @@
 package web
 
-import "github.com/Project-Planner/backend/model"
+import (
+	"github.com/Project-Planner/backend/model"
+)
 
 // Database represents the interface for the web web to use for persistent storage.
 type Database interface {

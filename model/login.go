@@ -1,13 +1,16 @@
 package model
 
+import "encoding/xml"
+
 type Login struct {
-	Text string `xml:",chardata"`
-	Name struct {
-		Text string `xml:",chardata"`
-		Val  string `xml:"val,attr"`
-	} `xml:"name"`
-	Hash struct {
-		Text string `xml:",chardata"`
-		Val  string `xml:"val,attr"`
-	} `xml:"hash"`
+	XMLName xml.Name  `xml:"login"`
+	Name    Attribute `xml:"name"`
+	Hash    Attribute `xml:"hash"`
+}
+
+func NewLogin(name, hash string) Login {
+	return Login{
+		Name: NewAttribute("name", name),
+		Hash: NewAttribute("hash", hash),
+	}
 }
