@@ -133,3 +133,29 @@ func deleteCookie(w http.ResponseWriter, c *http.Cookie) {
 
 	http.SetCookie(w, &delC)
 }
+
+// calendarPermissions takes a calendar c, and a user id and returns which permissions this user has for c.
+func calendarPermissions(c model.Calendar, userID string) model.Permission {
+	if c.Owner.Val == userID {
+		return model.Owner
+	}
+
+	s := func(u []model.Attribute, n string) bool {
+		for _, v := range u {
+			if v.Val == n {
+				return true
+			}
+		}
+		return false
+	}
+
+	if s(c.Permissions.Edit.User, userID) {
+		return model.Edit
+	}
+
+	if s(c.Permissions.View.User, userID) {
+		return model.Read
+	}
+
+	return model.None
+}
