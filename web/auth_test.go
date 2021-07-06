@@ -322,6 +322,10 @@ type dbMock struct {
 	}
 }
 
+func (d dbMock) GetCalendar(calendarid string) (model.Calendar, error) {
+	panic("implement me")
+}
+
 func (d dbMock) AddUser(userid, hashedPW string) error {
 	return d.data["AddUser"].e
 }

@@ -14,4 +14,8 @@ type Database interface {
 	// AddUser adds a user with the provided username and hashedPW to the persistence layer. It returns an error if
 	// the user ist not added. (Keep in mind to add a login to the auth file and to the user file).
 	AddUser(userid, hashedPW string) error
+
+	// GetCalendar returns the calendar for the specified user and calendar name. Return model.ErrNotFound if calendar
+	// not found.
+	GetCalendar(calendarid string) (model.Calendar, error)
 }

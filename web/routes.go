@@ -2,6 +2,7 @@ package web
 
 import (
 	"github.com/gorilla/mux"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
@@ -9,11 +10,17 @@ import (
 
 var db Database
 var conf ServerConfig
+var calendarXSL string
 
 // ListenAndServe starts the webserver with the given database implementation and config file
 func ListenAndServe(database Database, configuration ServerConfig) {
 	db = database
 	conf = configuration
+	c, err := ioutil.ReadFile(conf.HTMLDir + "/data/calendar.xsl")
+	if err != nil {
+		panic(err)
+	}
+	calendarXSL = string(c)
 
 	// create a new router to attach routes to. Redirect to proper routes without trailing slash
 	r := mux.NewRouter().StrictSlash(true)
@@ -35,6 +42,9 @@ func registerRoutes(r *mux.Router) {
 	// Example of registering a function to the route "domain.tld/me/calendars", if conf.AuthedPathName = "/me":
 	// authed.HandleFunc("/calendars", calandarsHandler)
 	authed.HandleFunc("/c/{"+userIDStr+"}/{"+calendarIDStr+"}", getCalendarHandler).Methods("GET")
+	authed.HandleFunc("/c/{"+calendarIDStr+"}", getCalendarHandler).Methods("GET")
+	authed.HandleFunc("/c", getCalendarHandler).Methods("GET")
+	authed.HandleFunc("/calendar.xsl", getCalendarXSLHandler)
 	authed.HandleFunc("/logout", logoutHandler).Methods("GET")
 
 	r.HandleFunc("/api/login", loginHandler).Methods("POST")
