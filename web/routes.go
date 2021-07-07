@@ -47,16 +47,8 @@ func registerRoutes(r *mux.Router) {
 	authed.HandleFunc("/c", getCalendarHandler).Methods("GET")
 	authed.HandleFunc("/calendar.xsl", getCalendarXSLHandler)
 
-	// morph appointment
-	authed.HandleFunc(fmt.Sprintf("/api/appointments/{%s}/{%s}", userIDStr, calendarIDStr), postAppointmentHandler).Methods("POST")
-	authed.HandleFunc(fmt.Sprintf("/api/appointments/{%s}", calendarIDStr), postAppointmentHandler).Methods("POST")
-	authed.HandleFunc("/api/appointments", postAppointmentHandler).Methods("POST")
-	authed.HandleFunc(fmt.Sprintf("/api/appointments/{%s}/{%s}/{%s}", userIDStr, calendarIDStr, itemIDStr), putAppointmentHandler).Methods("PUT")
-	authed.HandleFunc(fmt.Sprintf("/api/appointments/{%s}/{%s}", calendarIDStr, itemIDStr), putAppointmentHandler).Methods("PUT")
-	authed.HandleFunc(fmt.Sprintf("/api/appointments/{%s}", itemIDStr), putAppointmentHandler).Methods("PUT")
-	authed.HandleFunc(fmt.Sprintf("/api/appointments/{%s}/{%s}/{%s}", userIDStr, calendarIDStr, itemIDStr), deleteAppointmentHandler).Methods("DELETE")
-	authed.HandleFunc(fmt.Sprintf("/api/appointments/{%s}/{%s}", calendarIDStr, itemIDStr), deleteAppointmentHandler).Methods("DELETE")
-	authed.HandleFunc(fmt.Sprintf("/api/appointments/{%s}", itemIDStr), deleteAppointmentHandler).Methods("DELETE")
+	// attach auto generated endpoint routes
+	attachEndpoints(authed)
 
 	authed.HandleFunc("/logout", logoutHandler).Methods("GET")
 
