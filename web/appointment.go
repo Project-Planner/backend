@@ -40,7 +40,43 @@ func postAppointmentHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func putAppointmentHandler(w http.ResponseWriter, r *http.Request) {
+	// Parse data for put
+	a, err := model.NewAppointment(r)
+	if err != nil && err != model.ErrReqFieldMissing {
+		http.Error(w, "could not parse sent data", http.StatusBadRequest)
+		return
+	}
 
+	// get calendar, must be able to edit
+	c, err := getCalendarIfPermission(w, r, model.Edit)
+	if err != nil {
+		// err reporting already done by method call
+		return
+	}
+
+	items := c.Items.Appointments.Appointment
+
+	// find idx of item to be edited
+	ids := make([]model.Identifier, len(items))
+	for i, v := range items {
+		ids[i] = v
+	}
+	idx, err := itemIdx(w, r, ids...)
+	if err != nil {
+		return // err reporting already done by method call
+	}
+
+	items[idx].Update(a)
+
+	err = db.SetCalendar(c.ID.Val, c)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(items[idx].String()))
 }
 
 func deleteAppointmentHandler(w http.ResponseWriter, r *http.Request) {

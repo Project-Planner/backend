@@ -61,13 +61,44 @@ func NewAppointment(r *http.Request) (Appointment, error) {
 	if vs, ok := r.Form["desc"]; !ok || len(vs) != 1 {
 		retErr = ErrReqFieldMissing
 	} else {
-		a.Desc = vs[0]
+		if vs[0] == "" {
+			a.Desc = " "
+		} else {
+			a.Desc = vs[0]
+		}
 	}
 
 	id, _ := uuid.NewRandom()
 	a.ID = id.String()
 
 	return a, retErr
+}
+
+// Update all non initial fields of o in the receiver.
+func (a *Appointment) Update(o Appointment) {
+	if o.Name.Val != "" {
+		a.Name.Val = o.Name.Val
+	}
+
+	if o.StartDate.Val != "" {
+		a.StartDate.Val = o.StartDate.Val
+	}
+
+	if o.StartTime.Val != "" {
+		a.StartTime.Val = o.StartTime.Val
+	}
+
+	if o.EndDate.Val != "" {
+		a.EndDate.Val = o.EndDate.Val
+	}
+
+	if o.EndTime.Val != "" {
+		a.EndTime.Val = o.EndTime.Val
+	}
+
+	if o.Desc != "" {
+		a.Desc = o.Desc
+	}
 }
 
 func (a Appointment) String() string {
