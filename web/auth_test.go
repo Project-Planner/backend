@@ -329,9 +329,6 @@ func (d dbMock) GetCalendar(calendarid string) (model.Calendar, error) {
 	}
 
 	un := d.data["GetCalendar"].d.(model.Calendar)
-	if calendarid != un.ID.Val {
-		return model.Calendar{}, model.ErrNotFound
-	}
 	return un, e
 }
 

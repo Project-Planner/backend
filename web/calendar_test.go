@@ -1,9 +1,169 @@
 package web
 
 import (
+	"context"
+	"fmt"
+	"github.com/Project-Planner/backend/model"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 )
+
+func TestGetCalendarHandler(t *testing.T) {
+	testOwner := "lambda"
+	userView := "userView"
+	userEdit := "userEdit"
+	userNone := "userNone"
+
+	defaultCalendar := dbMock{data: map[string]struct {
+		d interface{}
+		e error
+	}{
+		"GetCalendar": {
+			d: model.Calendar{
+				Name: struct {
+					Text string `xml:",chardata"`
+					Val  string `xml:"val,attr"`
+				}{Val: testOwner},
+				Owner: struct {
+					Text string `xml:",chardata"`
+					Val  string `xml:"val,attr"`
+				}{Val: testOwner},
+				ID: struct {
+					Text string `xml:",chardata"`
+					Val  string `xml:"val,attr"`
+				}{Val: testOwner + "/" + testOwner},
+				Permissions: struct {
+					Text string `xml:",chardata"`
+					View struct {
+						Text string            `xml:",chardata"`
+						User []model.Attribute `xml:"user"`
+					} `xml:"view"`
+					Edit struct {
+						Text string            `xml:",chardata"`
+						User []model.Attribute `xml:"user"`
+					} `xml:"edit"`
+				}(struct {
+					Text string
+					View struct {
+						Text string            `xml:",chardata"`
+						User []model.Attribute `xml:"user"`
+					}
+					Edit struct {
+						Text string            `xml:",chardata"`
+						User []model.Attribute `xml:"user"`
+					}
+				}{
+					View: struct {
+						Text string            `xml:",chardata"`
+						User []model.Attribute `xml:"user"`
+					}{User: []model.Attribute{
+						{
+							Val: userView,
+						},
+					}},
+					Edit: struct {
+						Text string            `xml:",chardata"`
+						User []model.Attribute `xml:"user"`
+					}{User: []model.Attribute{
+						{
+							Val: userEdit,
+						},
+					}}}),
+			},
+		},
+	}}
+
+	tt := []struct {
+		db        dbMock
+		path      string
+		urlParams string
+		authed    string // user authed by middleware
+		code      int
+	}{
+		// Kosher Case direct link
+		{
+			path:      "/c/" + testOwner + "/" + testOwner,
+			urlParams: "?date=1.1.1970&time=15:14",
+			authed:    testOwner,
+			code:      http.StatusOK,
+			db:        defaultCalendar,
+		},
+		// Kosher Case auto link
+		{
+			path:      "/c",
+			urlParams: "?date=1.1.1970&time=15:14",
+			authed:    testOwner,
+			code:      http.StatusOK,
+			db:        defaultCalendar,
+		},
+		// Unauthorized
+		{
+			path:      "/c",
+			urlParams: "?date=1.1.1970&time=15:14",
+			authed:    "",
+			code:      http.StatusUnauthorized,
+			db:        defaultCalendar,
+		},
+		// Forbidden
+		{
+			path:      "/c/" + testOwner + "/" + testOwner,
+			urlParams: "?date=1.1.1970&time=15:14",
+			authed:    userNone,
+			code:      http.StatusForbidden,
+			db:        defaultCalendar,
+		},
+		// user view
+		{
+			path:      "/c/" + testOwner + "/" + testOwner,
+			urlParams: "?date=1.1.1970&time=15:14",
+			authed:    userView,
+			code:      http.StatusOK,
+			db:        defaultCalendar,
+		},
+	}
+
+	for _, tc := range tt {
+		db = tc.db
+
+		r, err := http.NewRequest("GET", tc.path+tc.urlParams, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(getCalendarHandler)
+
+		p := strings.Split(tc.path, "/")
+		muxVars := make(map[string]string)
+		if len(p) == 3 {
+			muxVars[userIDStr] = p[2]
+		} else if len(p) == 4 {
+			muxVars[userIDStr] = p[2]
+			muxVars[calendarIDStr] = p[3]
+		}
+
+		ctx := context.WithValue(r.Context(), userIDStr, tc.authed)
+		ctx = context.WithValue(ctx, 0, muxVars)
+
+		if tc.authed == "" {
+			handler.ServeHTTP(rr, r)
+		} else {
+			handler.ServeHTTP(rr, r.WithContext(ctx))
+		}
+
+		if rr.Code != tc.code {
+			t.Fatalf("wrong status code: got: %d want: %d \n%s\n%v", rr.Code, tc.code, rr.Body.String(), tc)
+		}
+
+		if tc.code == http.StatusOK &&
+			!strings.Contains(rr.Body.String(),
+				fmt.Sprintf(`href="%s"`, conf.AuthedPathName+"/calendar.xsl"+tc.urlParams)) {
+			t.Fatalf("url params not added successfully. Got: %s \nIn test case %v", rr.Body.String(), tc)
+		}
+	}
+}
 
 func TestVarXLS_String(t *testing.T) {
 	want := `<xsl:variable name="weekDate" select="'1.1.1970'"/>` + "\n"
