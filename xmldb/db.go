@@ -7,6 +7,10 @@ type database struct {
 	conf DBConfig
 }
 
+func (d database) SetCalendar(calendarid string, c model.Calendar) error {
+	panic("implement me")
+}
+
 func (d database) GetCalendar(calendarid string) (model.Calendar, error) {
 	panic("implement me")
 }

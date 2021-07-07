@@ -32,40 +32,8 @@ type Calendar struct {
 	Items struct {
 		Text         string `xml:",chardata"`
 		Appointments struct {
-			Text        string `xml:",chardata"`
-			Appointment []struct {
-				Text string `xml:",chardata"`
-				ID   string `xml:"id,attr"`
-				Name struct {
-					Text string `xml:",chardata"`
-					Val  string `xml:"val,attr"`
-				} `xml:"name"`
-				Color struct {
-					Text string `xml:",chardata"`
-					Val  string `xml:"val,attr"`
-				} `xml:"color"`
-				StartDate struct {
-					Text string `xml:",chardata"`
-					Val  string `xml:"val,attr"`
-				} `xml:"startDate"`
-				StartTime struct {
-					Text string `xml:",chardata"`
-					Val  string `xml:"val,attr"`
-				} `xml:"startTime"`
-				EndTime struct {
-					Text string `xml:",chardata"`
-					Val  string `xml:"val,attr"`
-				} `xml:"endTime"`
-				EndDate struct {
-					Text string `xml:",chardata"`
-					Val  string `xml:"val,attr"`
-				} `xml:"endDate"`
-				Cat struct {
-					Text string `xml:",chardata"`
-					Val  string `xml:"val,attr"`
-				} `xml:"cat"`
-				Desc string `xml:"desc"`
-			} `xml:"appointment"`
+			Text        string        `xml:",chardata"`
+			Appointment []Appointment `xml:"appointment"`
 		} `xml:"appointments"`
 		Milestones struct {
 			Text      string `xml:",chardata"`
