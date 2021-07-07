@@ -74,3 +74,7 @@ func (a Appointment) String() string {
 	aXML, _ := xml.Marshal(a)
 	return string(aXML)
 }
+
+func (a Appointment) GetID() string {
+	return a.ID
+}
