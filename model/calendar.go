@@ -36,23 +36,8 @@ type Calendar struct {
 			Appointment []Appointment `xml:"appointment"`
 		} `xml:"appointments"`
 		Milestones struct {
-			Text      string `xml:",chardata"`
-			Milestone []struct {
-				Text string `xml:",chardata"`
-				ID   string `xml:"id,attr"`
-				Name struct {
-					Text string `xml:",chardata"`
-					Val  string `xml:"val,attr"`
-				} `xml:"name"`
-				Duedate struct {
-					Text string `xml:",chardata"`
-					Val  string `xml:"val,attr"`
-				} `xml:"duedate"`
-				Duetime struct {
-					Text string `xml:",chardata"`
-					Val  string `xml:"val,attr"`
-				} `xml:"duetime"`
-			} `xml:"milestone"`
+			Text      string      `xml:",chardata"`
+			Milestone []Milestone `xml:"milestone"`
 		} `xml:"milestones"`
 		Tasks struct {
 			Text string `xml:",chardata"`
