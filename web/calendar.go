@@ -28,7 +28,11 @@ func getCalendarXSLHandler(w http.ResponseWriter, r *http.Request) {
 
 func getCalendarHandler(w http.ResponseWriter, r *http.Request) {
 	v := mux.Vars(r)
-	authedUser := r.Context().Value(userIDStr).(string)
+	authedUser, ok := r.Context().Value(userIDStr).(string)
+	if !ok {
+		http.Error(w, "", http.StatusUnauthorized)
+		return
+	}
 
 	uID, ok := v[userIDStr]
 	if !ok {
