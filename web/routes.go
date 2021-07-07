@@ -1,6 +1,7 @@
 package web
 
 import (
+	"fmt"
 	"github.com/gorilla/mux"
 	"io/ioutil"
 	"log"
@@ -41,21 +42,13 @@ func registerRoutes(r *mux.Router) {
 
 	// Example of registering a function to the route "domain.tld/me/calendars", if conf.AuthedPathName = "/me":
 	// authed.HandleFunc("/calendars", calandarsHandler)
-	authed.HandleFunc("/c/{"+userIDStr+"}/{"+calendarIDStr+"}", getCalendarHandler).Methods("GET")
-	authed.HandleFunc("/c/{"+calendarIDStr+"}", getCalendarHandler).Methods("GET")
+	authed.HandleFunc(fmt.Sprintf("/c/{%s}/{%s}", userIDStr, calendarIDStr), getCalendarHandler).Methods("GET")
+	authed.HandleFunc(fmt.Sprintf("/c/{%s}", calendarIDStr), getCalendarHandler).Methods("GET")
 	authed.HandleFunc("/c", getCalendarHandler).Methods("GET")
 	authed.HandleFunc("/calendar.xsl", getCalendarXSLHandler)
 
-	// morph appointment
-	authed.HandleFunc("/api/appointments/{"+userIDStr+"}/{"+calendarIDStr+"}", postAppointmentHandler).Methods("POST")
-	authed.HandleFunc("/api/appointments/{"+calendarIDStr+"}", postAppointmentHandler).Methods("POST")
-	authed.HandleFunc("/api/appointments", postAppointmentHandler).Methods("POST")
-	authed.HandleFunc("/api/appointments/{"+userIDStr+"}/{"+calendarIDStr+"}/{"+itemIDStr+"}", putAppointmentHandler).Methods("PUT")
-	authed.HandleFunc("/api/appointments/{"+calendarIDStr+"}/{"+itemIDStr+"}", putAppointmentHandler).Methods("PUT")
-	authed.HandleFunc("/api/appointments/{"+itemIDStr+"}", putAppointmentHandler).Methods("PUT")
-	authed.HandleFunc("/api/appointments/{"+userIDStr+"}/{"+calendarIDStr+"}/{"+itemIDStr+"}", deleteAppointmentHandler).Methods("DELETE")
-	authed.HandleFunc("/api/appointments/{"+calendarIDStr+"}/{"+itemIDStr+"}", deleteAppointmentHandler).Methods("DELETE")
-	authed.HandleFunc("/api/appointments/{"+itemIDStr+"}", deleteAppointmentHandler).Methods("DELETE")
+	// attach auto generated endpoint routes
+	attachEndpoints(authed)
 
 	authed.HandleFunc("/logout", logoutHandler).Methods("GET")
 
