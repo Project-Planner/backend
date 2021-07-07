@@ -45,6 +45,18 @@ func registerRoutes(r *mux.Router) {
 	authed.HandleFunc("/c/{"+calendarIDStr+"}", getCalendarHandler).Methods("GET")
 	authed.HandleFunc("/c", getCalendarHandler).Methods("GET")
 	authed.HandleFunc("/calendar.xsl", getCalendarXSLHandler)
+
+	// morph appointment
+	authed.HandleFunc("/api/appointments/{"+userIDStr+"}/{"+calendarIDStr+"}", postAppointmentHandler).Methods("POST")
+	authed.HandleFunc("/api/appointments/{"+calendarIDStr+"}", postAppointmentHandler).Methods("POST")
+	authed.HandleFunc("/api/appointments", postAppointmentHandler).Methods("POST")
+	authed.HandleFunc("/api/appointments/{"+userIDStr+"}/{"+calendarIDStr+"}/{"+itemIDStr+"}", putAppointmentHandler).Methods("PUT")
+	authed.HandleFunc("/api/appointments/{"+calendarIDStr+"}/{"+itemIDStr+"}", putAppointmentHandler).Methods("PUT")
+	authed.HandleFunc("/api/appointments/{"+itemIDStr+"}", putAppointmentHandler).Methods("PUT")
+	authed.HandleFunc("/api/appointments/{"+userIDStr+"}/{"+calendarIDStr+"}/{"+itemIDStr+"}", deleteAppointmentHandler).Methods("DELETE")
+	authed.HandleFunc("/api/appointments/{"+calendarIDStr+"}/{"+itemIDStr+"}", deleteAppointmentHandler).Methods("DELETE")
+	authed.HandleFunc("/api/appointments/{"+itemIDStr+"}", deleteAppointmentHandler).Methods("DELETE")
+
 	authed.HandleFunc("/logout", logoutHandler).Methods("GET")
 
 	r.HandleFunc("/api/login", loginHandler).Methods("POST")

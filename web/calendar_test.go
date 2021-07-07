@@ -138,7 +138,7 @@ func TestGetCalendarHandler(t *testing.T) {
 		p := strings.Split(tc.path, "/")
 		muxVars := make(map[string]string)
 		if len(p) == 3 {
-			muxVars[userIDStr] = p[2]
+			muxVars[calendarIDStr] = p[2]
 		} else if len(p) == 4 {
 			muxVars[userIDStr] = p[2]
 			muxVars[calendarIDStr] = p[3]

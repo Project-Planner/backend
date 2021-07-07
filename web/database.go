@@ -18,4 +18,7 @@ type Database interface {
 	// GetCalendar returns the calendar for the specified user and calendar name. Return model.ErrNotFound if calendar
 	// not found.
 	GetCalendar(calendarid string) (model.Calendar, error)
+
+	// SetCalendar sets the given calendar to the given ID.
+	SetCalendar(calendarid string, c model.Calendar) error
 }
