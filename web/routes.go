@@ -54,6 +54,8 @@ func registerRoutes(r *mux.Router) {
 	authed.HandleFunc(fmt.Sprintf("/c/{%s}", calendarIDStr), putCalendarHandler).Methods("PUT")
 	authed.HandleFunc("/c", putCalendarHandler).Methods("PUT")
 
+	// Delete User
+	authed.HandleFunc("/api/user", deleteUserHandler).Methods("DELETE")
 
 	// attach auto generated endpoint routes
 	attachEndpoints(authed)

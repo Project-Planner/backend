@@ -63,6 +63,23 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK) // possibly redirect to another page later
 }
 
+func deleteUserHandler(w http.ResponseWriter, r *http.Request) {
+	userid, ok := r.Context().Value(userIDStr).(string)
+	if !ok {
+		http.Error(w, "", http.StatusUnauthorized)
+		return
+	}
+
+	err := db.DeleteUser(userid)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func registerHandler(w http.ResponseWriter, r *http.Request) {
 	username, pw, err := parseForm(w, r)
 	if err != nil {

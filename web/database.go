@@ -23,8 +23,10 @@ type Database interface {
 	GetCalendar(calendarid string) (model.Calendar, error)
 
 	// SetCalendar sets the given calendar to the given ID. This overrides any existing calendar or creates a new one.
+	// DO NOT forget to add the calendar to the user file
 	SetCalendar(calendarid string, c model.Calendar) error
 
-	// DeleteCalendar deletes the calendar with the given ID. Returns model.ErrNotFound if calendar was not found
+	// DeleteCalendar deletes the calendar with the given ID. Returns model.ErrNotFound if calendar was not found.
+	// DO NOT forget to remove the calendar from the user file
 	DeleteCalendar(calendarid string) error
 }
