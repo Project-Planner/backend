@@ -40,7 +40,41 @@ func getCalendarHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func postCalendarHandler(w http.ResponseWriter, r *http.Request) {
+	authedUser, ok := r.Context().Value(userIDStr).(string)
+	if !ok {
+		http.Error(w, "", http.StatusUnauthorized)
+		return
+	}
 
+	c, err := model.NewCalendar(r, authedUser)
+	if err == model.ErrReqFieldMissing {
+		aXML, _ := xml.Marshal(c)
+		http.Error(w, "required field was missing, got:\n"+string(aXML), http.StatusUnprocessableEntity)
+		return
+	} else if err != nil {
+		http.Error(w, "could not parse sent data", http.StatusBadRequest)
+		return
+	}
+
+	_, err = db.GetCalendar(c.GetID())
+	if err != nil && err != model.ErrNotFound {
+		http.Error(w, "", http.StatusInternalServerError)
+		log.Println(err)
+		return
+	} else if err == nil {
+		http.Error(w, "calendar already exists", http.StatusConflict)
+		return
+	}
+
+	err = db.SetCalendar(c.GetID(), c)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	w.Write([]byte(c.String()))
 }
 
 //getCalendarIfPermission returns the requested calendar, after it has checked whether the minPerm are met by the

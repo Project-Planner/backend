@@ -19,6 +19,6 @@ type Database interface {
 	// not found.
 	GetCalendar(calendarid string) (model.Calendar, error)
 
-	// SetCalendar sets the given calendar to the given ID.
+	// SetCalendar sets the given calendar to the given ID. This overrides any existing calendar or creates a new one.
 	SetCalendar(calendarid string, c model.Calendar) error
 }
