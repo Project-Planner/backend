@@ -18,6 +18,9 @@ type Database interface {
 	// DeleteUser deletes the user AND LOGIN with the given ID. Returns model.ErrNotFound if user was not found
 	DeleteUser(userid string) error
 
+	// GetUser returns the user, model.ErrNotFound, or another internal server error
+	GetUser(userid string) (model.User, error)
+
 	// GetCalendar returns the calendar for the specified user and calendar name. Return model.ErrNotFound if calendar
 	// not found.
 	GetCalendar(calendarid string) (model.Calendar, error)

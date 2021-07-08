@@ -7,6 +7,18 @@ type database struct {
 	conf DBConfig
 }
 
+func (d database) DeleteUser(userid string) error {
+	panic("implement me")
+}
+
+func (d database) GetUser(userid string) (model.User, error) {
+	panic("implement me")
+}
+
+func (d database) DeleteCalendar(calendarid string) error {
+	panic("implement me")
+}
+
 func (d database) SetCalendar(calendarid string, c model.Calendar) error {
 	panic("implement me")
 }
