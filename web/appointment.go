@@ -3,6 +3,7 @@ package web
 import (
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"github.com/Project-Planner/backend/model"
 	"github.com/gorilla/mux"
 	"log"
@@ -10,47 +11,22 @@ import (
 )
 
 func postAppointmentHandler(w http.ResponseWriter, r *http.Request) {
-	a, err := model.NewAppointment(r)
-	if err == model.ErrReqFieldMissing {
-		aXML, _ := xml.Marshal(a)
-		http.Error(w, "required field was missing, got:\n"+string(aXML), http.StatusUnprocessableEntity)
-		return
-	} else if err != nil {
-		http.Error(w, "could not parse sent data", http.StatusBadRequest)
-		return
-	}
-
-	c, err := getCalendarIfPermission(w, r, model.Edit)
+	i, err := model.NewAppointment(r)
+	c, err := preparePostItem(w, r, i, err)
 	if err != nil {
-		// err reporting already done by method call
 		return
 	}
 
-	c.Items.Appointments.Appointment = append(c.Items.Appointments.Appointment, a)
+	c.Items.Appointments.Appointment = append(c.Items.Appointments.Appointment, i)
 
-	err = db.SetCalendar(c.ID.Val, c)
-	if err != nil {
-		log.Println(err)
-		http.Error(w, "", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(a.String()))
+	finishItem(w, c, i, http.StatusCreated)
 }
 
 func putAppointmentHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse data for put
 	a, err := model.NewAppointment(r)
-	if err != nil && err != model.ErrReqFieldMissing {
-		http.Error(w, "could not parse sent data", http.StatusBadRequest)
-		return
-	}
-
-	// get calendar, must be able to edit
-	c, err := getCalendarIfPermission(w, r, model.Edit)
+	c, err := preparePutItem(w, r, err)
 	if err != nil {
-		// err reporting already done by method call
 		return
 	}
 
@@ -68,15 +44,7 @@ func putAppointmentHandler(w http.ResponseWriter, r *http.Request) {
 
 	items[idx].Update(a)
 
-	err = db.SetCalendar(c.ID.Val, c)
-	if err != nil {
-		log.Println(err)
-		http.Error(w, "", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(items[idx].String()))
+	finishItem(w, c, items[idx], http.StatusOK)
 }
 
 func deleteAppointmentHandler(w http.ResponseWriter, r *http.Request) {
@@ -100,14 +68,48 @@ func deleteAppointmentHandler(w http.ResponseWriter, r *http.Request) {
 	items[idx] = items[len(items)-1]
 	c.Items.Appointments.Appointment = items[:len(items)-1]
 
-	err = db.SetCalendar(c.ID.Val, c)
+	finishItem(w, c, nil, http.StatusNoContent)
+}
+
+//preparePostItem handles error reporting and just returns an error to indicate to return early.
+func preparePostItem(w http.ResponseWriter, r *http.Request, a model.Identifier, err error) (model.Calendar, error) {
+	if err == model.ErrReqFieldMissing {
+		aXML, _ := xml.Marshal(a)
+		http.Error(w, "required field was missing, got:\n"+string(aXML), http.StatusUnprocessableEntity)
+		return model.Calendar{}, err
+	} else if err != nil {
+		http.Error(w, "could not parse sent data", http.StatusBadRequest)
+		return model.Calendar{}, err
+	}
+
+	c, err := getCalendarIfPermission(w, r, model.Edit)
+	// err reporting already done by method call
+	return c, err
+}
+
+//preparePutItem handles error reporting and just returns an error to indicate to return early.
+func preparePutItem(w http.ResponseWriter, r *http.Request, err error) (model.Calendar, error){
+	if err != nil && err != model.ErrReqFieldMissing {
+		http.Error(w, "could not parse sent data", http.StatusBadRequest)
+		return model.Calendar{}, err
+	}
+
+	// get calendar, must be able to edit
+	return getCalendarIfPermission(w, r, model.Edit)
+}
+
+func finishItem(w http.ResponseWriter, c model.Calendar, i fmt.Stringer, status int) {
+	err := db.SetCalendar(c.ID.Val, c)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	w.WriteHeader(status)
+	if status != http.StatusNoContent && i != nil {
+		w.Write([]byte(i.String()))
+	}
 }
 
 // itemIdx returns the index of the requested id in arr (by ID) and handles error reporting. Return -1 means,

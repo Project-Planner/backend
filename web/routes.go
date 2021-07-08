@@ -40,12 +40,25 @@ func registerRoutes(r *mux.Router) {
 	// attach middleware for all routes
 	authed.Use(auth)
 
-	// Example of registering a function to the route "domain.tld/me/calendars", if conf.AuthedPathName = "/me":
-	// authed.HandleFunc("/calendars", calandarsHandler)
+	//Get Calendar
 	authed.HandleFunc(fmt.Sprintf("/c/{%s}/{%s}", userIDStr, calendarIDStr), getCalendarHandler).Methods("GET")
 	authed.HandleFunc(fmt.Sprintf("/c/{%s}", calendarIDStr), getCalendarHandler).Methods("GET")
 	authed.HandleFunc("/c", getCalendarHandler).Methods("GET")
-	authed.HandleFunc("/calendar.xsl", getCalendarXSLHandler)
+	authed.HandleFunc("/calendar.xsl", getCalendarXSLHandler).Methods("GET")
+
+	//Get all Calendars of User
+	authed.HandleFunc("/calendars", getUserCalendarsHandler).Methods("GET")
+
+	// Modify Calendar
+	authed.HandleFunc("/c", postCalendarHandler).Methods("POST")
+	authed.HandleFunc(fmt.Sprintf("/c/{%s}/{%s}", userIDStr, calendarIDStr), deleteCalendarHandler).Methods("DELETE")
+	authed.HandleFunc(fmt.Sprintf("/c/{%s}", calendarIDStr), deleteCalendarHandler).Methods("DELETE")
+	authed.HandleFunc(fmt.Sprintf("/c/{%s}/{%s}", userIDStr, calendarIDStr), putCalendarHandler).Methods("PUT")
+	authed.HandleFunc(fmt.Sprintf("/c/{%s}", calendarIDStr), putCalendarHandler).Methods("PUT")
+	authed.HandleFunc("/c", putCalendarHandler).Methods("PUT")
+
+	// Delete User
+	authed.HandleFunc("/api/user", deleteUserHandler).Methods("DELETE")
 
 	// attach auto generated endpoint routes
 	attachEndpoints(authed)

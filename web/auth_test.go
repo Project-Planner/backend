@@ -322,6 +322,18 @@ type dbMock struct {
 	}
 }
 
+func (d dbMock) DeleteUser(userid string) error {
+	panic("implement me")
+}
+
+func (d dbMock) GetUser(userid string) (model.User, error) {
+	panic("implement me")
+}
+
+func (d dbMock) DeleteCalendar(calendarid string) error {
+	panic("implement me")
+}
+
 func (d dbMock) SetCalendar(calendarid string, c model.Calendar) error {
 	return d.data["SetCalendar"].e
 }

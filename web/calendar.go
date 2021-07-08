@@ -39,6 +39,107 @@ func getCalendarHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(xmlStr))
 }
 
+func deleteCalendarHandler(w http.ResponseWriter, r *http.Request) {
+	c, err := getCalendarIfPermission(w, r, model.Owner)
+	if err != nil {
+		return
+	}
+
+	if c.Name.Val == c.Owner.Val {
+		http.Error(w, "you must not delete default calendar", http.StatusMethodNotAllowed)
+		return
+	}
+
+	err = db.DeleteCalendar(c.GetID())
+	if err == model.ErrNotFound {
+		http.Error(w, "calendar not found", http.StatusNotFound)
+		return
+	} else if err != nil {
+		log.Println(err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func putCalendarHandler(w http.ResponseWriter, r *http.Request) {
+	c, err := getCalendarIfPermission(w, r, model.Edit)
+	if err != nil {
+		return
+	}
+
+	o, err := model.NewCalendar(r, c.Owner.Val)
+
+	c.Update(o)
+
+	err = db.SetCalendar(c.ID.Val, c)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+ 	w.Write([]byte(o.String()))
+}
+
+func postCalendarHandler(w http.ResponseWriter, r *http.Request) {
+	authedUser, ok := r.Context().Value(userIDStr).(string)
+	if !ok {
+		http.Error(w, "", http.StatusUnauthorized)
+		return
+	}
+
+	c, err := model.NewCalendar(r, authedUser)
+	if err == model.ErrReqFieldMissing {
+		aXML, _ := xml.Marshal(c)
+		http.Error(w, "required field was missing, got:\n"+string(aXML), http.StatusUnprocessableEntity)
+		return
+	} else if err != nil {
+		http.Error(w, "could not parse sent data", http.StatusBadRequest)
+		return
+	}
+
+	_, err = db.GetCalendar(c.GetID())
+	if err != nil && err != model.ErrNotFound {
+		http.Error(w, "", http.StatusInternalServerError)
+		log.Println(err)
+		return
+	} else if err == nil {
+		http.Error(w, "calendar already exists", http.StatusConflict)
+		return
+	}
+
+	err = db.SetCalendar(c.GetID(), c)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	w.Write([]byte(c.String()))
+}
+
+func getUserCalendarsHandler(w http.ResponseWriter, r *http.Request) {
+	userid, ok := r.Context().Value(userIDStr).(string)
+	if !ok {
+		http.Error(w, "", http.StatusUnauthorized)
+		return
+	}
+
+	u, err := db.GetUser(userid)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+
+	b, _ := xml.Marshal(u)
+	w.Write(b)
+}
+
 //getCalendarIfPermission returns the requested calendar, after it has checked whether the minPerm are met by the
 // requesting account. If err != nil is returned, then this error has already been dealt with via http.Error and
 // is just returned to indicate a guard statement early return.
