@@ -39,6 +39,25 @@ func getCalendarHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(xmlStr))
 }
 
+func deleteCalendarHandler(w http.ResponseWriter, r *http.Request) {
+	c, err := getCalendarIfPermission(w, r, model.Owner)
+	if err != nil {
+		return
+	}
+
+	err = db.DeleteCalendar(c.GetID())
+	if err == model.ErrNotFound {
+		http.Error(w, "calendar not found", http.StatusNotFound)
+		return
+	} else if err != nil {
+		log.Println(err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func postCalendarHandler(w http.ResponseWriter, r *http.Request) {
 	authedUser, ok := r.Context().Value(userIDStr).(string)
 	if !ok {

@@ -15,10 +15,16 @@ type Database interface {
 	// the user ist not added. (Keep in mind to add a login to the auth file and to the user file).
 	AddUser(userid, hashedPW string) error
 
+	// DeleteUser deletes the user AND LOGIN with the given ID. Returns model.ErrNotFound if user was not found
+	DeleteUser(userid string) error
+
 	// GetCalendar returns the calendar for the specified user and calendar name. Return model.ErrNotFound if calendar
 	// not found.
 	GetCalendar(calendarid string) (model.Calendar, error)
 
 	// SetCalendar sets the given calendar to the given ID. This overrides any existing calendar or creates a new one.
 	SetCalendar(calendarid string, c model.Calendar) error
+
+	// DeleteCalendar deletes the calendar with the given ID. Returns model.ErrNotFound if calendar was not found
+	DeleteCalendar(calendarid string) error
 }

@@ -48,6 +48,8 @@ func registerRoutes(r *mux.Router) {
 
 	// Modify Calendar
 	authed.HandleFunc("/c", postCalendarHandler).Methods("POST")
+	authed.HandleFunc(fmt.Sprintf("/c/{%s}/{%s}", userIDStr, calendarIDStr), deleteCalendarHandler).Methods("DELETE")
+	authed.HandleFunc(fmt.Sprintf("/c/{%s}", calendarIDStr), deleteCalendarHandler).Methods("DELETE")
 
 	// attach auto generated endpoint routes
 	attachEndpoints(authed)
