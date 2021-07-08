@@ -45,6 +45,11 @@ func deleteCalendarHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if c.Name.Val == c.Owner.Val {
+		http.Error(w, "you must not delete default calendar", http.StatusMethodNotAllowed)
+		return
+	}
+
 	err = db.DeleteCalendar(c.GetID())
 	if err == model.ErrNotFound {
 		http.Error(w, "calendar not found", http.StatusNotFound)
@@ -56,6 +61,27 @@ func deleteCalendarHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func putCalendarHandler(w http.ResponseWriter, r *http.Request) {
+	c, err := getCalendarIfPermission(w, r, model.Edit)
+	if err != nil {
+		return
+	}
+
+	o, err := model.NewCalendar(r, c.Owner.Val)
+
+	c.Update(o)
+
+	err = db.SetCalendar(c.ID.Val, c)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+ 	w.Write([]byte(o.String()))
 }
 
 func postCalendarHandler(w http.ResponseWriter, r *http.Request) {
