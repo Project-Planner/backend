@@ -41,47 +41,7 @@ type Calendar struct {
 		} `xml:"milestones"`
 		Tasks struct {
 			Text string `xml:",chardata"`
-			Task []struct {
-				Text string `xml:",chardata"`
-				ID   string `xml:"id,attr"`
-				Name struct {
-					Text string `xml:",chardata"`
-					Val  string `xml:"val,attr"`
-				} `xml:"name"`
-				Milestone struct {
-					Text string `xml:",chardata"`
-					ID   string `xml:"id,attr"`
-				} `xml:"milestone"`
-				Duedate struct {
-					Text string `xml:",chardata"`
-					Val  string `xml:"val,attr"`
-				} `xml:"duedate"`
-				Duetime struct {
-					Text string `xml:",chardata"`
-					Val  string `xml:"val,attr"`
-				} `xml:"duetime"`
-				Desc     string `xml:"desc"`
-				Subtasks struct {
-					Text    string `xml:",chardata"`
-					Subtask []struct {
-						Text string `xml:",chardata"`
-						ID   string `xml:"id,attr"`
-						Name struct {
-							Text string `xml:",chardata"`
-							Val  string `xml:"val,attr"`
-						} `xml:"name"`
-						Duedate struct {
-							Text string `xml:",chardata"`
-							Val  string `xml:"val,attr"`
-						} `xml:"duedate"`
-						Duetime struct {
-							Text string `xml:",chardata"`
-							Val  string `xml:"val,attr"`
-						} `xml:"duetime"`
-						Desc string `xml:"desc"`
-					} `xml:"subtask"`
-				} `xml:"subtasks"`
-			} `xml:"task"`
+			Task []Task `xml:"task"`
 		} `xml:"tasks"`
 	} `xml:"items"`
 }
