@@ -39,6 +39,10 @@ func getCalendarHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(xmlStr))
 }
 
+func postCalendarHandler(w http.ResponseWriter, r *http.Request) {
+
+}
+
 //getCalendarIfPermission returns the requested calendar, after it has checked whether the minPerm are met by the
 // requesting account. If err != nil is returned, then this error has already been dealt with via http.Error and
 // is just returned to indicate a guard statement early return.
