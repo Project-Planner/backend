@@ -45,8 +45,3 @@ type Calendar struct {
 		} `xml:"tasks"`
 	} `xml:"items"`
 }
-
-type Attribute struct {
-	Text string `xml:",chardata"`
-	Val  string `xml:"val,attr"`
-}
