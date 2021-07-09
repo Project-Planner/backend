@@ -15,6 +15,9 @@ type Database interface {
 	// the user ist not added. (Keep in mind to add a login to the auth file and to the user file).
 	AddUser(userid, hashedPW string) error
 
+	// SetUser should not be used if the user doesn't already exist, as ist won't create a login file.
+	SetUser(userid string, user model.User) error
+
 	// DeleteUser deletes the user AND LOGIN with the given ID. Returns model.ErrNotFound if user was not found
 	DeleteUser(userid string) error
 
