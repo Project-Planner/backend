@@ -77,6 +77,15 @@ func deleteUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	c, err := r.Cookie(authStr)
+	if err != nil {
+		http.Error(w, "no authentication token (jwt) provided, please log in.\n"+err.Error(),
+			http.StatusUnauthorized)
+		return
+	}
+
+	deleteCookie(w, c)
+
 	w.WriteHeader(http.StatusNoContent)
 }
 
