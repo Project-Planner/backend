@@ -105,6 +105,11 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !legalName(username) {
+		http.Error(w, "illegal name", http.StatusUnprocessableEntity)
+		return
+	}
+
 	hashed, err := bcrypt.GenerateFromPassword([]byte(pw), 14)
 	if err != nil {
 		http.Error(w, "", http.StatusInternalServerError)

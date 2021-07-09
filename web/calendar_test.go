@@ -168,6 +168,40 @@ func TestGetCalendarHandler(t *testing.T) {
 	}
 }
 
+func TestLegalName(t *testing.T) {
+	tt := []struct{
+		name string
+		want bool
+	} {
+		// Kosher case
+		{
+			name: "abcDEF09+-_",
+			want: true,
+		},
+		// Critical illegal character
+		{
+			name: "a/bc/",
+			want: false,
+		},
+		// Empty name
+		{
+			name: "",
+			want: false,
+		},
+		// space only
+		{
+			name: " ",
+			want: false,
+		},
+	}
+
+	for _, tc := range tt {
+		if got := legalName(tc.name); tc.want != got {
+			t.Errorf("got: %v\ntc: %v", got, tc)
+		}
+	}
+}
+
 func TestVarXLS_String(t *testing.T) {
 	want := `<xsl:variable name="weekDate" select="'1.1.1970'"/>` + "\n"
 	got := varXLS{name: "weekDate", value: "1.1.1970"}.String()
