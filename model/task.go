@@ -14,6 +14,8 @@ type Task struct {
 		Text string `xml:",chardata"`
 		ID   string `xml:"id,attr"`
 	} `xml:"milestone"`
+	StartDate Attribute `xml:"startDate"`
+	StartTime Attribute `xml:"startTime"`
 	Duedate Attribute `xml:"duedate"`
 	Duetime Attribute `xml:"duetime"`
 	Desc     string `xml:"desc"`
@@ -38,6 +40,18 @@ func NewTask(r *http.Request) (Task, error) {
 		retErr = ErrReqFieldMissing
 	} else {
 		t.Name = Attribute{Val: vs[0]}
+	}
+
+	if vs, ok := r.Form["startDate"]; !ok || len(vs) != 1 {
+		retErr = ErrReqFieldMissing
+	} else {
+		t.StartDate = Attribute{Val: vs[0]}
+	}
+
+	if vs, ok := r.Form["startTime"]; !ok || len(vs) != 1 {
+		retErr = ErrReqFieldMissing
+	} else {
+		t.StartTime = Attribute{Val: vs[0]}
 	}
 
 	if vs, ok := r.Form["duedate"]; !ok || len(vs) != 1 {
@@ -112,6 +126,8 @@ type Subtask struct {
 	Text string `xml:",chardata"`
 	ID   string `xml:"id,attr"`
 	Name Attribute `xml:"name"`
+	StartDate Attribute `xml:"startDate"`
+	StartTime Attribute `xml:"startTime"`
 	Duedate Attribute `xml:"duedate"`
 	Duetime Attribute `xml:"duetime"`
 	Desc string `xml:"desc"`

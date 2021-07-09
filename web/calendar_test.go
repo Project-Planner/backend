@@ -54,7 +54,7 @@ var defCalendar = model.Calendar{
 			User []model.Attribute `xml:"user"`
 		}{User: []model.Attribute{
 			{
-				Val: "abc",
+				Val: userView,
 			},
 		}},
 		Edit: struct {
@@ -62,7 +62,7 @@ var defCalendar = model.Calendar{
 			User []model.Attribute `xml:"user"`
 		}{User: []model.Attribute{
 			{
-				Val: "efg",
+				Val: userEdit,
 			},
 		}}}),
 }
