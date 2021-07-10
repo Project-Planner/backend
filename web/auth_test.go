@@ -316,6 +316,7 @@ func TestRegisterHandler(t *testing.T) {
 }
 
 type dbMock struct {
+	setCalendar func(string, model.Calendar) error
 	data map[string]struct {
 		d interface{}
 		e error
@@ -335,6 +336,10 @@ func (d dbMock) DeleteCalendar(calendarid string) error {
 }
 
 func (d dbMock) SetCalendar(calendarid string, c model.Calendar) error {
+	if d.setCalendar != nil {
+		return d.setCalendar(calendarid, c)
+	}
+
 	return d.data["SetCalendar"].e
 }
 

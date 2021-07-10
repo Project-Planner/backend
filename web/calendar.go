@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+	"regexp"
 	"strings"
 )
 
@@ -101,6 +102,11 @@ func postCalendarHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !legalName(c.Name.Val) {
+		http.Error(w, "illegal name", http.StatusUnprocessableEntity)
+		return
+	}
+
 	_, err = db.GetCalendar(c.GetID())
 	if err != nil && err != model.ErrNotFound {
 		http.Error(w, "", http.StatusInternalServerError)
@@ -138,6 +144,12 @@ func getUserCalendarsHandler(w http.ResponseWriter, r *http.Request) {
 
 	b, _ := xml.Marshal(u)
 	w.Write(b)
+}
+
+func legalName(n string) bool {
+	regex := "^[-+_A-Za-z0-9]+$"
+	b, _ := regexp.Match(regex, []byte(n))
+	return b
 }
 
 //getCalendarIfPermission returns the requested calendar, after it has checked whether the minPerm are met by the

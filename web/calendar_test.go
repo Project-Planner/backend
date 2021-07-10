@@ -10,68 +10,71 @@ import (
 	"testing"
 )
 
+var testOwner = "lambda"
+var userView = "userView"
+var userEdit = "userEdit"
+var userNone = "userNone"
+
+var defCalendar = model.Calendar{
+	Name: struct {
+		Text string `xml:",chardata"`
+		Val  string `xml:"val,attr"`
+	}{Val: testOwner},
+	Owner: struct {
+		Text string `xml:",chardata"`
+		Val  string `xml:"val,attr"`
+	}{Val: testOwner},
+	ID: struct {
+		Text string `xml:",chardata"`
+		Val  string `xml:"val,attr"`
+	}{Val: testOwner + "/" + testOwner},
+	Permissions: struct {
+		Text string `xml:",chardata"`
+		View struct {
+			Text string            `xml:",chardata"`
+			User []model.Attribute `xml:"user"`
+		} `xml:"view"`
+		Edit struct {
+			Text string            `xml:",chardata"`
+			User []model.Attribute `xml:"user"`
+		} `xml:"edit"`
+	}(struct {
+		Text string
+		View struct {
+			Text string            `xml:",chardata"`
+			User []model.Attribute `xml:"user"`
+		}
+		Edit struct {
+			Text string            `xml:",chardata"`
+			User []model.Attribute `xml:"user"`
+		}
+	}{
+		View: struct {
+			Text string            `xml:",chardata"`
+			User []model.Attribute `xml:"user"`
+		}{User: []model.Attribute{
+			{
+				Val: userView,
+			},
+		}},
+		Edit: struct {
+			Text string            `xml:",chardata"`
+			User []model.Attribute `xml:"user"`
+		}{User: []model.Attribute{
+			{
+				Val: userEdit,
+			},
+		}}}),
+}
+
 func TestGetCalendarHandler(t *testing.T) {
-	testOwner := "lambda"
-	userView := "userView"
-	userEdit := "userEdit"
-	userNone := "userNone"
 
 	defaultCalendar := dbMock{data: map[string]struct {
 		d interface{}
 		e error
 	}{
 		"GetCalendar": {
-			d: model.Calendar{
-				Name: struct {
-					Text string `xml:",chardata"`
-					Val  string `xml:"val,attr"`
-				}{Val: testOwner},
-				Owner: struct {
-					Text string `xml:",chardata"`
-					Val  string `xml:"val,attr"`
-				}{Val: testOwner},
-				ID: struct {
-					Text string `xml:",chardata"`
-					Val  string `xml:"val,attr"`
-				}{Val: testOwner + "/" + testOwner},
-				Permissions: struct {
-					Text string `xml:",chardata"`
-					View struct {
-						Text string            `xml:",chardata"`
-						User []model.Attribute `xml:"user"`
-					} `xml:"view"`
-					Edit struct {
-						Text string            `xml:",chardata"`
-						User []model.Attribute `xml:"user"`
-					} `xml:"edit"`
-				}(struct {
-					Text string
-					View struct {
-						Text string            `xml:",chardata"`
-						User []model.Attribute `xml:"user"`
-					}
-					Edit struct {
-						Text string            `xml:",chardata"`
-						User []model.Attribute `xml:"user"`
-					}
-				}{
-					View: struct {
-						Text string            `xml:",chardata"`
-						User []model.Attribute `xml:"user"`
-					}{User: []model.Attribute{
-						{
-							Val: userView,
-						},
-					}},
-					Edit: struct {
-						Text string            `xml:",chardata"`
-						User []model.Attribute `xml:"user"`
-					}{User: []model.Attribute{
-						{
-							Val: userEdit,
-						},
-					}}}),
-			},
+			d: defCalendar,
 		},
 	}}
 
@@ -161,6 +164,40 @@ func TestGetCalendarHandler(t *testing.T) {
 			!strings.Contains(rr.Body.String(),
 				fmt.Sprintf(`href="%s"`, conf.AuthedPathName+"/calendar.xsl"+tc.urlParams)) {
 			t.Fatalf("url params not added successfully. Got: %s \nIn test case %v", rr.Body.String(), tc)
+		}
+	}
+}
+
+func TestLegalName(t *testing.T) {
+	tt := []struct{
+		name string
+		want bool
+	} {
+		// Kosher case
+		{
+			name: "abcDEF09+-_",
+			want: true,
+		},
+		// Critical illegal character
+		{
+			name: "a/bc/",
+			want: false,
+		},
+		// Empty name
+		{
+			name: "",
+			want: false,
+		},
+		// space only
+		{
+			name: " ",
+			want: false,
+		},
+	}
+
+	for _, tc := range tt {
+		if got := legalName(tc.name); tc.want != got {
+			t.Errorf("got: %v\ntc: %v", got, tc)
 		}
 	}
 }

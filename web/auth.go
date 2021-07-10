@@ -77,6 +77,15 @@ func deleteUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	c, err := r.Cookie(authStr)
+	if err != nil {
+		http.Error(w, "no authentication token (jwt) provided, please log in.\n"+err.Error(),
+			http.StatusUnauthorized)
+		return
+	}
+
+	deleteCookie(w, c)
+
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -93,6 +102,11 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	} else if err == nil {
 		http.Error(w, "username already exists", http.StatusConflict)
+		return
+	}
+
+	if !legalName(username) {
+		http.Error(w, "illegal name", http.StatusUnprocessableEntity)
 		return
 	}
 
