@@ -7,6 +7,10 @@ type database struct {
 	conf DBConfig
 }
 
+func (d database) SetUser(userid string, user model.User) error {
+	panic("implement me")
+}
+
 func (d database) DeleteUser(userid string) error {
 	panic("implement me")
 }

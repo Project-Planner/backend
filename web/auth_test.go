@@ -323,6 +323,10 @@ type dbMock struct {
 	}
 }
 
+func (d dbMock) SetUser(userid string, user model.User) error {
+	panic("implement me")
+}
+
 func (d dbMock) DeleteUser(userid string) error {
 	panic("implement me")
 }

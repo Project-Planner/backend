@@ -60,6 +60,8 @@ func registerRoutes(r *mux.Router) {
 	// Delete User
 	authed.HandleFunc("/api/user", deleteUserHandler).Methods("DELETE")
 
+	authed.HandleFunc("/api/sharing", sharingHandler).Methods("POST")
+
 	// attach auto generated endpoint routes
 	attachEndpoints(authed)
 
