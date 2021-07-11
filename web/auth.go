@@ -63,6 +63,32 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK) // possibly redirect to another page later
 }
 
+func deleteUserHandler(w http.ResponseWriter, r *http.Request) {
+	userid, ok := r.Context().Value(userIDStr).(string)
+	if !ok {
+		http.Error(w, "", http.StatusUnauthorized)
+		return
+	}
+
+	err := db.DeleteUser(userid)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+
+	c, err := r.Cookie(authStr)
+	if err != nil {
+		http.Error(w, "no authentication token (jwt) provided, please log in.\n"+err.Error(),
+			http.StatusUnauthorized)
+		return
+	}
+
+	deleteCookie(w, c)
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func registerHandler(w http.ResponseWriter, r *http.Request) {
 	username, pw, err := parseForm(w, r)
 	if err != nil {
@@ -76,6 +102,11 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	} else if err == nil {
 		http.Error(w, "username already exists", http.StatusConflict)
+		return
+	}
+
+	if !legalName(username) {
+		http.Error(w, "illegal name", http.StatusUnprocessableEntity)
 		return
 	}
 
@@ -132,4 +163,30 @@ func deleteCookie(w http.ResponseWriter, c *http.Cookie) {
 	}
 
 	http.SetCookie(w, &delC)
+}
+
+// calendarPermissions takes a calendar c, and a user id and returns which permissions this user has for c.
+func calendarPermissions(c model.Calendar, userID string) model.Permission {
+	if c.Owner.Val == userID {
+		return model.Owner
+	}
+
+	s := func(u []model.Attribute, n string) bool {
+		for _, v := range u {
+			if v.Val == n {
+				return true
+			}
+		}
+		return false
+	}
+
+	if s(c.Permissions.Edit.User, userID) {
+		return model.Edit
+	}
+
+	if s(c.Permissions.View.User, userID) {
+		return model.Read
+	}
+
+	return model.None
 }

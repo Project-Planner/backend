@@ -10,8 +10,8 @@ type Login struct {
 
 func NewLogin(name, hash string) Login {
 	return Login{
-		Name: NewAttribute("name", name),
-		Hash: NewAttribute("hash", hash),
+		Name: Attribute{Val: name},
+		Hash: Attribute{Val: hash},
 	}
 }
 

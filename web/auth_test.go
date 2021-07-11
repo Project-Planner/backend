@@ -316,10 +316,49 @@ func TestRegisterHandler(t *testing.T) {
 }
 
 type dbMock struct {
-	data map[string]struct {
+	setCalendar func(string, model.Calendar) error
+	data        map[string]struct {
 		d interface{}
 		e error
 	}
+}
+
+func (d dbMock) AddCalendar(ownerID, calName string) error {
+	panic("implement me")
+}
+
+func (d dbMock) SetUser(userid string, user model.User) error {
+	panic("implement me")
+}
+
+func (d dbMock) DeleteUser(userid string) error {
+	panic("implement me")
+}
+
+func (d dbMock) GetUser(userid string) (model.User, error) {
+	panic("implement me")
+}
+
+func (d dbMock) DeleteCalendar(calendarid string) error {
+	panic("implement me")
+}
+
+func (d dbMock) SetCalendar(calendarid string, c model.Calendar) error {
+	if d.setCalendar != nil {
+		return d.setCalendar(calendarid, c)
+	}
+
+	return d.data["SetCalendar"].e
+}
+
+func (d dbMock) GetCalendar(calendarid string) (model.Calendar, error) {
+	e := d.data["GetCalendar"].e
+	if e != nil {
+		return model.Calendar{}, e
+	}
+
+	un := d.data["GetCalendar"].d.(model.Calendar)
+	return un, e
 }
 
 func (d dbMock) AddUser(userid, hashedPW string) error {

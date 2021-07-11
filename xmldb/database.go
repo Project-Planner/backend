@@ -32,10 +32,21 @@ func New(config DBConfig) (database, error) {
 
 	//2. Step: Ensuring that parent folders (auth, user, calendars) exist.
 	//――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
-	ensureDir(config.DBDir)
-	ensureDir(config.AuthDir)
-	ensureDir(config.UserDir)
-	ensureDir(config.CalendarDir)
+	if err := ensureDir(config.DBDir); err != nil {
+		return database{}, err
+	}
+
+	if err := ensureDir(config.AuthDir); err != nil {
+		return database{}, err
+	}
+
+	if err := ensureDir(config.UserDir); err != nil {
+		return database{}, err
+	}
+
+	if err := ensureDir(config.CalendarDir); err != nil {
+		return database{}, err
+	}
 
 	//3. Step: Parsing source files into corresponding structures or collections.
 	//―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
@@ -106,10 +117,19 @@ func (db database) GetUser(userID string) (model.User, error) {
 	return val, nil
 }
 
-//SetUser sets the given user to the given @userID.
+//SetUser sets the given user to the given @userID
+//only if the user actually exists.
+func (db database) SetUser(userID string, user model.User) error {
+	if _, err := db.GetUser(userID); err != nil {
+		return err
+	}
+	return db.setUser(userID, user)
+}
+
+//setUser sets the given user to the given @userID.
 //This overwrites any existing user or creates a new one,
 //on the disk as well as in the collection.
-func (db database) SetUser(userID string, user model.User) error {
+func (db database) setUser(userID string, user model.User) error {
 	var path = fmt.Sprintf("%s/%s.xml", db.config.UserDir, userID)
 	var err = write(path, user.String())
 	db.users[userID] = user
@@ -121,7 +141,7 @@ func (db database) SetUser(userID string, user model.User) error {
 func (db database) AddUser(userID, hash string) error {
 	//1. Step: Checking whether user is already registered.
 	//―――――――――――――――――――――――――――――――――――――――――――――――――――――
-	if _, ok := db.users[userID]; ok {
+	if _, err := db.GetUser(userID); err == nil {
 		return model.ErrAlreadyExists
 	}
 
@@ -155,19 +175,25 @@ func (db database) AddUser(userID, hash string) error {
 	//		   placed in a folder dedicated for this user.
 	//―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 	path = fmt.Sprintf("%s/%s", db.config.CalendarDir, userID)
-	ensureDir(path)
+	if err := ensureDir(path); err != nil {
+		return err
+	}
 
-	var calID = fmt.Sprintf("%s/initial", userID)
-	var calendar = model.NewCalendar("initial", userID)
-	db.SetCalendar(calID, calendar)
+	var calID = fmt.Sprintf("%s/%s", userID, userID)
+	var calendar = model.Calendar{
+		Name:  model.Attribute{Val: userID},
+		Owner: model.Attribute{Val: userID},
+	}
+	db.setCalendar(calID, calendar)
 
 	//4. Step: Creating user file itself, linking initial calendar to it
 	//		   and writing to disk.
 	//―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 	var user = model.NewUser(userID)
-	if err := user.AssociateCalendar(model.OWNER, calID, db); err != nil {
+	if err := user.AssociateCalendar(model.Owner, calID, db); err != nil {
 		log.Fatal(err)
 	}
+	db.setUser(userID, user)
 
 	return nil
 }
@@ -250,7 +276,7 @@ func (db database) DeleteUser(userID string) error {
 	//5. Step: Writing affected users back.
 	//―――――――――――――――――――――――――――――――――――――――
 	for id, user := range affected {
-		db.SetUser(id, user)
+		db.setUser(id, user)
 	}
 
 	return nil
@@ -298,24 +324,36 @@ func (db database) AddCalendar(ownerID, calName string) error {
 	//3. Step: Creating calendar file and registering it
 	//		   in the corresponding collection.
 	//―――――――――――――――――――――――――――――――――――――――――――――――――――――――
-	var calendar = model.NewCalendar(calName, ownerID)
-	db.SetCalendar(calID, calendar)
+	var calendar = model.Calendar{
+		Name:  model.Attribute{Val: calName},
+		Owner: model.Attribute{Val: ownerID},
+	}
+	db.setCalendar(calID, calendar)
 
 	//4. Step: Associating calendar to issuing owner
 	//		   and writing back.
 	//―――――――――――――――――――――――――――――――――――――――――――――――――
 	var owner = db.users[ownerID]
-	if err := owner.AssociateCalendar(model.OWNER, calID, db); err != nil {
+	if err := owner.AssociateCalendar(model.Owner, calID, db); err != nil {
 		log.Fatal(err)
 	}
 
 	return nil
 }
 
-//SetCalendar sets the given calendar to the given @calendarID.
+//SetCalendar sets the given calendar to the given @calID
+//only if the calendar already exists.
+func (db database) SetCalendar(calID string, cal model.Calendar) error {
+	if _, err := db.GetCalendar(calID); err != nil {
+		return err
+	}
+	return db.setCalendar(calID, cal)
+}
+
+//setCalendar sets the given calendar to the given @calID.
 //This overrides any existing calendar or creates a new one,
 //on the disk as well as in the collection.
-func (db database) SetCalendar(calID string, cal model.Calendar) error {
+func (db database) setCalendar(calID string, cal model.Calendar) error {
 	var path = fmt.Sprintf("%s/%s.xml", db.config.CalendarDir, calID)
 	var err = write(path, cal.String())
 	db.calendars[calID] = cal
@@ -339,7 +377,7 @@ func (db database) DeleteCalendar(calID string) error {
 		user, exists := db.users[userID.Val]
 		if exists {
 			user.DisassociateCalendar(db.config.CalendarDir, calID, cal)
-			db.SetUser(user.Name.Val, user)
+			db.setUser(user.Name.Val, user)
 		}
 	}
 
@@ -349,7 +387,7 @@ func (db database) DeleteCalendar(calID string) error {
 	var ownerID = cal.Owner.Val
 	var owner = db.users[ownerID]
 	owner.DisassociateCalendar(db.config.CalendarDir, calID, cal)
-	db.SetUser(ownerID, owner)
+	db.setUser(ownerID, owner)
 	delete(db.calendars, calID)
 
 	return nil

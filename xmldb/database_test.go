@@ -37,7 +37,9 @@ func TestAddUser(t *testing.T) {
 	//―――――――――――――――――――――――――――――――――――――――――――――
 	var userID = "f5932068"
 	var hash = "hash"
-	db.AddUser(userID, hash)
+	if err := db.AddUser(userID, hash); err != nil {
+		t.Fatal(err)
+	}
 
 	//Check if user file exists and if user is
 	//registered in user collection.
@@ -63,7 +65,7 @@ func TestAddUser(t *testing.T) {
 
 	//Check if initial calendar and its parent folder exist
 	//and if it is registered in calendar collection.
-	var calID = fmt.Sprintf("%s/initial", userID)
+	var calID = fmt.Sprintf("%s/%s", userID, userID)
 	path = fmt.Sprintf("%s/%s", db.config.CalendarDir, userID)
 	if stat, err := os.Stat(path); err != nil {
 		if os.IsNotExist(err) {
@@ -73,7 +75,7 @@ func TestAddUser(t *testing.T) {
 		}
 	}
 
-	path = fmt.Sprintf("%s/initial.xml", path)
+	path = fmt.Sprintf("%s/%s.xml", path, userID)
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		t.Fatal(fmt.Sprintf("Initial calendar for user '%s' doesn't exist.", userID))
 	}
@@ -95,7 +97,7 @@ func TestAddUser(t *testing.T) {
 	}
 
 	var calendar = db.calendars[calID]
-	if calendar.Name.Val != "initial" || calendar.Owner.Val != userID {
+	if calendar.Name.Val != userID || calendar.Owner.Val != userID {
 		t.Fatal(fmt.Sprintf("Calendar struct for user '%s' contains invalid data.", userID))
 	}
 
@@ -177,7 +179,7 @@ func TestGetUser(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var calID = fmt.Sprintf("%s/initial", userID1)
+	var calID = fmt.Sprintf("%s/%s", userID1, userID1)
 	if user.Name.Val != userID1 || len(user.Items.Calendars) != 1 || user.Items.Calendars[0].Link != calID {
 		t.Fatal(fmt.Sprintf("User struct for user '%s' contains invalid data.", userID1))
 	}
@@ -247,7 +249,7 @@ func TestGetCalendar(t *testing.T) {
 	//Check for first calendar.
 	//It should be successful, since the initial
 	//calendar is generated when the user is added.
-	var calName1 = "initial"
+	var calName1 = userID
 	var calID1 = fmt.Sprintf("%s/%s", userID, calName1)
 	var cal, err = db.GetCalendar(calID1)
 	if err != nil {
@@ -323,7 +325,7 @@ func TestSetCalendar(t *testing.T) {
 	db.AddUser(userID, hash)
 
 	//Retrieve initial calendar, modify it and write it back
-	var calID = fmt.Sprintf("%s/initial", userID)
+	var calID = fmt.Sprintf("%s/%s", userID, userID)
 	var cal, _ = db.GetCalendar(calID)
 	var replacement = "Notch"
 
@@ -342,7 +344,7 @@ func TestSetCalendar(t *testing.T) {
 	//4. Step: Parse from the calendar file directly to check
 	//		   whether the changes have also been written to disk.
 	//―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
-	var path = fmt.Sprintf("%s/%s/initial.xml", db.config.CalendarDir, userID)
+	var path = fmt.Sprintf("%s/%s/%s.xml", db.config.CalendarDir, userID, userID)
 	parse(path, &cal)
 	if cal.Owner.Val != replacement {
 		t.Fatal(fmt.Sprintf("Modified calendar with id '%s' has not been written to disk.", userID))
@@ -366,10 +368,10 @@ func TestAssociateCalendar(t *testing.T) {
 	db.AddUser(userID1, hash)
 	db.AddUser(userID2, hash)
 
-	var calID = fmt.Sprintf("%s/initial", userID1)
+	var calID = fmt.Sprintf("%s/%s", userID1, userID1)
 	var user2, _ = db.GetUser(userID2)
 
-	user2.AssociateCalendar(model.EDIT, calID, db)
+	user2.AssociateCalendar(model.Edit, calID, db)
 	db.SetUser(userID2, user2)
 
 	//3. Step: Check if calendar is listed in
@@ -426,10 +428,10 @@ func TestDeleteUser(t *testing.T) {
 	//3. Step: Associate initial calendar of first
 	//		   user to second one.
 	//――――――――――――――――――――――――――――――――――――――――――――――――
-	var calID = fmt.Sprintf("%s/initial", userID1)
+	var calID = fmt.Sprintf("%s/%s", userID1, userID1)
 	var user2, _ = db.GetUser(userID2)
 
-	user2.AssociateCalendar(model.EDIT, calID, db)
+	user2.AssociateCalendar(model.Edit, calID, db)
 	db.SetUser(userID2, user2)
 
 	//4. Step: Delete user, check for entry count
@@ -486,10 +488,10 @@ func TestDeleteCalendar(t *testing.T) {
 	db.AddUser(userID2, hash)
 
 	//Associate initial calendar of first user to second one.
-	var calID = fmt.Sprintf("%s/initial", userID1)
+	var calID = fmt.Sprintf("%s/%s", userID1, userID1)
 	var user2, _ = db.GetUser(userID2)
 
-	user2.AssociateCalendar(model.EDIT, calID, db)
+	user2.AssociateCalendar(model.Edit, calID, db)
 	db.SetUser(userID2, user2)
 
 	//3. Step: Delete calendar, check for entry count and calendar

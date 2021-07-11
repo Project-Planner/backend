@@ -25,7 +25,7 @@ type CalendarReference struct {
 
 func NewUser(name string) User {
 	return User{
-		Name:  NewAttribute("name", name),
+		Name:  Attribute{Val: name},
 		Items: Items{},
 	}
 }
@@ -58,7 +58,7 @@ func (user *User) DisassociateCalendar(path, calID string, cal Calendar) {
 //AssociateCalendar appends the calendar to the collection of the user's calendars,
 //if it hasn't been associated to the user yet and also links the user in the
 //calendar file itself.
-func (user *User) AssociateCalendar(perm permission, calID string, db database) error {
+func (user *User) AssociateCalendar(perm Permission, calID string, db database) error {
 	//If any of the iterated items/calendars has the same id as the calendar to
 	//be associated, an error is thrown, because the element is already there.
 	for _, cal := range user.Items.Calendars {
@@ -80,16 +80,18 @@ func (user *User) AssociateCalendar(perm permission, calID string, db database) 
 
 	//Link the user itself to the calendar.
 	var cal, _ = db.GetCalendar(calID)
-	if perm == OWNER {
+	if perm == Owner {
 		cal.Owner.Val = userID
 	} else {
-		var entry = NewAttribute("user", userID)
+		var entry = Attribute{
+			Val: userID,
+		}
 		var users []Attribute
 
-		if perm == VIEW {
+		if perm == Read {
 			users = cal.Permissions.View.User
 			cal.Permissions.View.User = append(users, entry)
-		} else if perm == EDIT {
+		} else if perm == Edit {
 			users = cal.Permissions.Edit.User
 			cal.Permissions.Edit.User = append(users, entry)
 		}
