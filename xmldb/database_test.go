@@ -2,7 +2,6 @@ package xmldb
 
 import (
 	"fmt"
-	"github.com/Project-Planner/backend/config"
 	"github.com/Project-Planner/backend/model"
 	"os"
 	"testing"
@@ -13,6 +12,7 @@ func TestNew(t *testing.T) {
 	//1. Step: Construct a database.
 	//――――――――――――――――――――――――――――――――――
 	var db = GetDatabase(t)
+	t.Cleanup(func() { DeleteDatabase(db, t) })
 
 	//2. Step: Check for entries.
 	//――――――――――――――――――――――――――――――――
@@ -21,10 +21,6 @@ func TestNew(t *testing.T) {
 			"len(users): %d\nlen(logins): %d\nlen(calendars): %d",
 			len(db.users), len(db.logins), len(db.calendars)))
 	}
-
-	//3. Step: Deconstruct the database.
-	//――――――――――――――――――――――――――――――――――――――
-	DeleteDatabase(db, t)
 }
 
 //DONE
@@ -32,6 +28,7 @@ func TestAddUser(t *testing.T) {
 	//1. Step: Construct a database.
 	//――――――――――――――――――――――――――――――――――
 	var db = GetDatabase(t)
+	t.Cleanup(func() { DeleteDatabase(db, t) })
 
 	//2. Step: Add user and check whether the user
 	//		   now actually exists by looking into
@@ -108,10 +105,6 @@ func TestAddUser(t *testing.T) {
 	if len(db.users) != 1 || len(db.logins) != 1 || len(db.calendars) != 1 {
 		t.Fatal("Invalid amount of entries in any of the data collections.")
 	}
-
-	//5. Step: Deconstruct the database.
-	//――――――――――――――――――――――――――――――――――――――
-	DeleteDatabase(db, t)
 }
 
 //DONE
@@ -119,6 +112,7 @@ func TestAddCalendar(t *testing.T) {
 	//1. Step: Construct a database.
 	//――――――――――――――――――――――――――――――――――
 	var db = GetDatabase(t)
+	t.Cleanup(func() { DeleteDatabase(db, t) })
 
 	//2. Step: Add user with initial and
 	//		   additional calendar.
@@ -147,7 +141,7 @@ func TestAddCalendar(t *testing.T) {
 		}
 	}
 
-	path = fmt.Sprintf("%s/%s", path, calName)
+	path = fmt.Sprintf("%s/%s.xml", path, calName)
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		t.Fatal(fmt.Sprintf("File for calendar with id '%s' doesn't exist.", calID))
 	}
@@ -156,13 +150,9 @@ func TestAddCalendar(t *testing.T) {
 	//		   gone wrong.
 	//―――――――――――――――――――――――――――――――――――――――――
 	var cal, _ = db.GetCalendar(calID)
-	if cal.Owner.Val != userID || cal.Name.Val != calID {
+	if cal.Owner.Val != userID || cal.Name.Val != calName {
 		t.Fatal(fmt.Sprintf("Calendar struct with id '%s' contains invalid data.", calID))
 	}
-
-	//5. Step: Deconstruct the database.
-	//――――――――――――――――――――――――――――――――――――――
-	DeleteDatabase(db, t)
 }
 
 //DONE
@@ -170,6 +160,7 @@ func TestGetUser(t *testing.T) {
 	//1. Step: Construct a database.
 	//――――――――――――――――――――――――――――――――――
 	var db = GetDatabase(t)
+	t.Cleanup(func() { DeleteDatabase(db, t) })
 
 	//2. Step: Add user, retrieve it, compare the data
 	//		   within and check for non-existent user.
@@ -199,10 +190,6 @@ func TestGetUser(t *testing.T) {
 	if err == nil {
 		t.Fatal(fmt.Sprintf("No error thrown for user '%s' although the user doesn't exist.", userID2))
 	}
-
-	//3. Step: Deconstruct the database.
-	//――――――――――――――――――――――――――――――――――――――
-	DeleteDatabase(db, t)
 }
 
 //DONE
@@ -210,6 +197,7 @@ func TestGetLogin(t *testing.T) {
 	//1. Step: Construct a database.
 	//――――――――――――――――――――――――――――――――――
 	var db = GetDatabase(t)
+	t.Cleanup(func() { DeleteDatabase(db, t) })
 
 	//2. Step: Add user, retrieve it's login,
 	//		   compare the data within and
@@ -239,10 +227,6 @@ func TestGetLogin(t *testing.T) {
 	if err == nil {
 		t.Fatal(fmt.Sprintf("No error thrown for user '%s' although the user doesn't exist.", userID2))
 	}
-
-	//3. Step: Deconstruct the database.
-	//――――――――――――――――――――――――――――――――――――――
-	DeleteDatabase(db, t)
 }
 
 //DONE
@@ -250,6 +234,7 @@ func TestGetCalendar(t *testing.T) {
 	//1. Step: Construct a database.
 	//――――――――――――――――――――――――――――――――――
 	var db = GetDatabase(t)
+	t.Cleanup(func() { DeleteDatabase(db, t) })
 
 	//2. Step: Add user, retrieve it's initial,
 	//		   compare the data within and
@@ -262,13 +247,14 @@ func TestGetCalendar(t *testing.T) {
 	//Check for first calendar.
 	//It should be successful, since the initial
 	//calendar is generated when the user is added.
-	var calID1 = fmt.Sprintf("%s/initial", userID)
+	var calName1 = "initial"
+	var calID1 = fmt.Sprintf("%s/%s", userID, calName1)
 	var cal, err = db.GetCalendar(calID1)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if cal.Name.Val != calID1 || cal.Owner.Val != userID {
+	if cal.Name.Val != calName1 || cal.Owner.Val != userID {
 		t.Fatal(fmt.Sprintf("Calendar struct for calendar with id '%s' contains invalid data.", calID1))
 	}
 
@@ -280,10 +266,6 @@ func TestGetCalendar(t *testing.T) {
 	if err == nil {
 		t.Fatal(fmt.Sprintf("No error thrown for calendar with id '%s' although the calendar doesn't exist.", calID2))
 	}
-
-	//3. Step: Deconstruct the database.
-	//――――――――――――――――――――――――――――――――――――――
-	DeleteDatabase(db, t)
 }
 
 //DONE
@@ -291,6 +273,7 @@ func TestSetUser(t *testing.T) {
 	//1. Step: Construct a database.
 	//――――――――――――――――――――――――――――――――――
 	var db = GetDatabase(t)
+	t.Cleanup(func() { DeleteDatabase(db, t) })
 
 	//2. Step: Add user, retrieve its struct, modify
 	//		   and set it again.
@@ -323,10 +306,6 @@ func TestSetUser(t *testing.T) {
 	if user.Name.Val != replacement {
 		t.Fatal(fmt.Sprintf("Modified user '%s' has not been written to disk.", userID))
 	}
-
-	//5. Step: Deconstruct the database.
-	//――――――――――――――――――――――――――――――――――――――
-	DeleteDatabase(db, t)
 }
 
 //DONE
@@ -334,6 +313,7 @@ func TestSetCalendar(t *testing.T) {
 	//1. Step: Construct a database.
 	//――――――――――――――――――――――――――――――――――
 	var db = GetDatabase(t)
+	t.Cleanup(func() { DeleteDatabase(db, t) })
 
 	//2. Step: Add user, retrieve his initial calendar,
 	//		   modify and set it.
@@ -367,10 +347,6 @@ func TestSetCalendar(t *testing.T) {
 	if cal.Owner.Val != replacement {
 		t.Fatal(fmt.Sprintf("Modified calendar with id '%s' has not been written to disk.", userID))
 	}
-
-	//5. Step: Deconstruct the database.
-	//――――――――――――――――――――――――――――――――――――――
-	DeleteDatabase(db, t)
 }
 
 //DONE
@@ -378,6 +354,7 @@ func TestAssociateCalendar(t *testing.T) {
 	//1. Step: Construct a database.
 	//――――――――――――――――――――――――――――――――
 	var db = GetDatabase(t)
+	t.Cleanup(func() { DeleteDatabase(db, t) })
 
 	//2. Step: Add two users that each have
 	//		   an initial calendar and link
@@ -425,10 +402,6 @@ func TestAssociateCalendar(t *testing.T) {
 	if !foundInCalendar {
 		t.Fatal(fmt.Sprintf("Calendar with id '%s' does not contain the user '%s'.", calID, userID2))
 	}
-
-	//5. Step: Deconstruct the database.
-	//――――――――――――――――――――――――――――――――――――――
-	DeleteDatabase(db, t)
 }
 
 //DONE
@@ -436,6 +409,7 @@ func TestDeleteUser(t *testing.T) {
 	//1. Step: Construct a database.
 	//――――――――――――――――――――――――――――――――――
 	var db = GetDatabase(t)
+	t.Cleanup(func() { DeleteDatabase(db, t) })
 
 	//2. Step: Adding two users and check entry count.
 	//―――――――――――――――――――――――――――――――――――――――――――――――――
@@ -454,6 +428,7 @@ func TestDeleteUser(t *testing.T) {
 	//――――――――――――――――――――――――――――――――――――――――――――――――
 	var calID = fmt.Sprintf("%s/initial", userID1)
 	var user2, _ = db.GetUser(userID2)
+
 	user2.AssociateCalendar(model.EDIT, calID, db)
 	db.SetUser(userID2, user2)
 
@@ -492,10 +467,6 @@ func TestDeleteUser(t *testing.T) {
 			t.Fatal(fmt.Sprintf("Reference to calendar '%s' can still be found at user '%s'.", calID, userID2))
 		}
 	}
-
-	//4. Step: Deconstruct the database.
-	//――――――――――――――――――――――――――――――――――――――
-	DeleteDatabase(db, t)
 }
 
 //DONE
@@ -503,6 +474,7 @@ func TestDeleteCalendar(t *testing.T) {
 	//1. Step: Construct a database.
 	//――――――――――――――――――――――――――――――――――
 	var db = GetDatabase(t)
+	t.Cleanup(func() { DeleteDatabase(db, t) })
 
 	//2. Step: Adding two users and associate the initial
 	//		   calendar of the first user to the second one.
@@ -546,20 +518,21 @@ func TestDeleteCalendar(t *testing.T) {
 			t.Fatal(fmt.Sprintf("Calendar with id '%s' is still registered in user '%s'.", calID, userID2))
 		}
 	}
-
-	//4. Step: Deconstruct the database.
-	//――――――――――――――――――――――――――――――――――――――
-	DeleteDatabase(db, t)
 }
 
 //GetDatabase loads and constructs a new database struct for testing.
-func GetDatabase(t *testing.T) Database {
-	conf, err := config.Load()
-	if err != nil {
-		t.Fatal(err)
+func GetDatabase(t *testing.T) database {
+	var config = DBConfig{
+		DBDir:          "./xmldb",
+		AuthRelDir:     "/auth",
+		AuthDir:        "",
+		UserRelDir:     "/users",
+		UserDir:        "",
+		CalendarRelDir: "/calendars",
+		CalendarDir:    "",
+		CacheSize:      0,
 	}
-
-	db, err := New(conf.DBConfig)
+	db, err := New(config)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -567,7 +540,7 @@ func GetDatabase(t *testing.T) Database {
 	return db
 }
 
-func DeleteDatabase(db Database, t *testing.T) {
+func DeleteDatabase(db database, t *testing.T) {
 	if err := os.RemoveAll(db.config.DBDir); err != nil {
 		t.Fatal(err)
 	}

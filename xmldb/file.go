@@ -2,7 +2,6 @@ package xmldb
 
 import (
 	"io/ioutil"
-	"log"
 	"os"
 )
 
@@ -14,18 +13,15 @@ func exists(path string) bool {
 }
 
 //write overwrites the file behind @path with @content
-func write(path, content string) {
-	if err := ioutil.WriteFile(path, []byte(content), 0666); err != nil {
-		log.Fatal(err)
-	}
+func write(path, content string) error {
+	return ioutil.WriteFile(path, []byte(content), 0666)
 }
 
 //ensureDir makes sure that a directory at the given
 //path exists by creating it if necessary.
-func ensureDir(path string) {
+func ensureDir(path string) error {
 	if !exists(path) {
-		if err := os.Mkdir(path, 0755); err != nil {
-			log.Fatal(err)
-		}
+		return os.Mkdir(path, 0755)
 	}
+	return nil
 }

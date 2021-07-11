@@ -10,7 +10,7 @@ import (
 )
 
 //The struct implementing the web.Database interface
-type Database struct {
+type database struct {
 	config    DBConfig
 	logins    map[string]model.Login
 	users     map[string]model.User
@@ -21,7 +21,7 @@ type Database struct {
 //Using the parent folder (database folder) path in the passed config, it is ensured that
 //necessary folders actually exists before parsing their content into the database struct.
 //After this process, the returned struct is a 1-by-1 depiction of the current system status.
-func New(config DBConfig) (Database, error) {
+func New(config DBConfig) (database, error) {
 
 	//1. Step: Expanding configuration file (e.g. constructing absolute paths
 	//		   from relative paths)
@@ -93,12 +93,12 @@ func New(config DBConfig) (Database, error) {
 		return nil
 	})
 
-	return Database{config, logins, users, calendars}, nil
+	return database{config, logins, users, calendars}, nil
 }
 
 //GetUser retrieves the user to a given @userID.
 //If the user doesn't exist, an error is thrown.
-func (db Database) GetUser(userID string) (model.User, error) {
+func (db database) GetUser(userID string) (model.User, error) {
 	val, ok := db.users[userID]
 	if !ok {
 		return model.User{}, model.ErrNotFound
@@ -109,15 +109,16 @@ func (db Database) GetUser(userID string) (model.User, error) {
 //SetUser sets the given user to the given @userID.
 //This overwrites any existing user or creates a new one,
 //on the disk as well as in the collection.
-func (db Database) SetUser(userID string, user model.User) {
+func (db database) SetUser(userID string, user model.User) error {
 	var path = fmt.Sprintf("%s/%s.xml", db.config.UserDir, userID)
-	write(path, user.String())
+	var err = write(path, user.String())
 	db.users[userID] = user
+	return err
 }
 
 //AddUser creates a new user by creating the user file itself, the user's authentication file
 //and an initial calendar file.
-func (db Database) AddUser(userID, hash string) error {
+func (db database) AddUser(userID, hash string) error {
 	//1. Step: Checking whether user is already registered.
 	//―――――――――――――――――――――――――――――――――――――――――――――――――――――
 	if _, ok := db.users[userID]; ok {
@@ -127,10 +128,21 @@ func (db Database) AddUser(userID, hash string) error {
 	//2. Step: Ensuring that target folders actually exists
 	//		   before creating the new user.
 	//―――――――――――――――――――――――――――――――――――――――――――――――――――――――
-	ensureDir(db.config.DBDir)
-	ensureDir(db.config.AuthDir)
-	ensureDir(db.config.UserDir)
-	ensureDir(db.config.CalendarDir)
+	if err := ensureDir(db.config.DBDir); err != nil {
+		return err
+	}
+
+	if err := ensureDir(db.config.AuthDir); err != nil {
+		return err
+	}
+
+	if err := ensureDir(db.config.UserDir); err != nil {
+		return err
+	}
+
+	if err := ensureDir(db.config.CalendarDir); err != nil {
+		return err
+	}
 
 	//2. Step: Creating authentication file.
 	//―――――――――――――――――――――――――――――――――――――――――
@@ -163,7 +175,7 @@ func (db Database) AddUser(userID, hash string) error {
 //DeleteUser not only deletes a user itself, but also his authentication file
 //and his calendars. Since the calendar can be referenced by multiple users,
 //these users must also be found and disassociated from the calendar.
-func (db Database) DeleteUser(userID string) error {
+func (db database) DeleteUser(userID string) error {
 	//1. Step: Checking whether user is already registered.
 	//―――――――――――――――――――――――――――――――――――――――――――――――――――――――
 	_, ok := db.users[userID]
@@ -247,7 +259,7 @@ func (db Database) DeleteUser(userID string) error {
 
 //GetLogin retrieves the login to a given @userID.
 //If the user doesn't exist, an error is thrown.
-func (db Database) GetLogin(userID string) (model.Login, error) {
+func (db database) GetLogin(userID string) (model.Login, error) {
 	val, ok := db.logins[userID]
 	if !ok {
 		return model.Login{}, model.ErrNotFound
@@ -260,7 +272,7 @@ func (db Database) GetLogin(userID string) (model.Login, error) {
 //Note: IDs of calendars are made of several parts.
 //Each calendar has an owner (with his unique userID), hence the scheme:
 //	<userID>/<unique calender name>.xml
-func (db Database) GetCalendar(calID string) (model.Calendar, error) {
+func (db database) GetCalendar(calID string) (model.Calendar, error) {
 	val, ok := db.calendars[calID]
 	if !ok {
 		return model.Calendar{}, model.ErrNotFound
@@ -270,7 +282,7 @@ func (db Database) GetCalendar(calID string) (model.Calendar, error) {
 
 //AddCalendar creates a new calendar and appends it to the owner's
 //collection of calendars.
-func (db Database) AddCalendar(ownerID, calName string) error {
+func (db database) AddCalendar(ownerID, calName string) error {
 	//1. Step: Checking whether calendar already exists.
 	//――――――――――――――――――――――――――――――――――――――――――――――――――――
 	var calID = fmt.Sprintf("%s/%s", ownerID, calName)
@@ -303,15 +315,16 @@ func (db Database) AddCalendar(ownerID, calName string) error {
 //SetCalendar sets the given calendar to the given @calendarID.
 //This overrides any existing calendar or creates a new one,
 //on the disk as well as in the collection.
-func (db Database) SetCalendar(calID string, cal model.Calendar) {
+func (db database) SetCalendar(calID string, cal model.Calendar) error {
 	var path = fmt.Sprintf("%s/%s.xml", db.config.CalendarDir, calID)
-	write(path, cal.String())
+	var err = write(path, cal.String())
 	db.calendars[calID] = cal
+	return err
 }
 
 //DeleteCalendar not only deletes the calendar file behind @calendarID, but
 //also removes references to this file.
-func (db Database) DeleteCalendar(calID string) error {
+func (db database) DeleteCalendar(calID string) error {
 	//1. Step: Checking whether calendar actually exists.
 	//―――――――――――――――――――――――――――――――――――――――――――――――――――――
 	cal, ok := db.calendars[calID]
