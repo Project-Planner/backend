@@ -13,6 +13,7 @@ func parse(source string, target interface{}) error {
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 
 	content, err := ioutil.ReadAll(file)
 	if err != nil {
