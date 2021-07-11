@@ -1,9 +1,10 @@
 package model
 
-type permission int
+type Permission int
 
 const (
-	VIEW permission = iota
-	EDIT
-	OWNER
+	None Permission = iota
+	Read
+	Edit
+	Owner
 )
