@@ -27,7 +27,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(l.Hash.Value), []byte(pw)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(l.Hash.Val), []byte(pw)); err != nil {
 		http.Error(w, errIncorrect.Error(), http.StatusUnauthorized)
 		return
 	}

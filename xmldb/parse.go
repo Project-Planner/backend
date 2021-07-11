@@ -8,8 +8,16 @@ import (
 
 //parse takes in the content of the file behind @source and
 //transforms it into the given struct @target.
-func parse(source string, target interface{}) {
-	file, _ := os.Open(source)
-	content, _ := ioutil.ReadAll(file)
-	xml.Unmarshal(content, target)
+func parse(source string, target interface{}) error {
+	file, err := os.Open(source)
+	if err != nil {
+		return err
+	}
+
+	content, err := ioutil.ReadAll(file)
+	if err != nil {
+		return err
+	}
+
+	return xml.Unmarshal(content, target)
 }

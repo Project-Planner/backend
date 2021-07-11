@@ -1,19 +1,29 @@
 package xmldb
 
-// DBConfig of the XML database
+//DBConfig of the XML database
 type DBConfig struct {
-	// DBRootDir - where the database resides on the system
-	RootDir string `yaml:"root_dir"`
-	// AuthDir - where the authentication file is stored
-	AuthDir string `yaml:"auth_dir"`
-	// UserDir - where the user files are stored
-	// AuthSubpath - where the authentication file actually is stored relative
-	// to AuthDir
-	AuthSubpath string `yaml:"auth_subpath"`
-	UserDir     string `yaml:"user_dir"`
-	// CalendarDir - where the calendar files are stored
-	CalendarDir string `yaml:"calendar_dir"`
-	// CacheSize - how many elements (e.g. users) will be cached simultaneously;
-	// amount will be limited, so that RAM doesn't get flooded with elements.
+	//RootDir - here all database files reside
+	DBDir string `yaml:"db_dir"`
+
+	//AuthRelDir - relative path (to root dir) where authentication files are stored.
+	AuthRelDir string `yaml:"auth_dir"`
+
+	//AuthDir - absolute path of where authentication files are stored.
+	AuthDir string
+
+	//UserRelDir - relative path (to root dir) where user files are stored.
+	UserRelDir string `yaml:"user_dir"`
+
+	//UserDir
+	UserDir string
+
+	//CalendarRelDir - relative path (to root dir) where calendar files are stored.
+	CalendarRelDir string `yaml:"calendar_dir"`
+
+	//CalendarDir
+	CalendarDir string
+
+	// CacheSize - how many bytes (e.g. for users) will be cached simultaneously;
+	//			   cache can be used to prevent RAM getting flooded with elements.
 	CacheSize int `yaml:"cache_size"`
 }

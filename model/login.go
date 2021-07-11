@@ -14,3 +14,8 @@ func NewLogin(name, hash string) Login {
 		Hash: NewAttribute("hash", hash),
 	}
 }
+
+func (l Login) String() string {
+	var parsed, _ = xml.MarshalIndent(l, "", "\t")
+	return string(parsed)
+}

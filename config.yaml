@@ -3,8 +3,7 @@ static_dir: "./web/statics"     # For linux we recommend "/var/web/plannet/stati
 html_dir: "./web/html"          # For linux we recommend "/var/web/plannet/html"
 authed_path_name: "/c"
 jwt_secret: "abc"               # Use something safer here
-root_dir: "/home/llambdaa/Downloads/xmldb"          # For linux we recommend "/var/xmldb"
-auth_dir: "/home/llambdaa/Downloads/xmldb/auth"
-auth_subpath: "/auth.xml"
-user_dir: "/home/llambdaa/Downloads/xmldb/users"
-calendar_dir: "/home/llambdaa/Downloads/xmldb/calendars"
+db_dir: "/home/llambdaa/Downloads/xmldb"          # For linux we recommend "/var/xmldb"
+auth_dir: "/auth"
+user_dir: "/users"
+calendar_dir: "/calendars"
