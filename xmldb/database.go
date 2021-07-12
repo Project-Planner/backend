@@ -3,7 +3,6 @@ package xmldb
 import (
 	"fmt"
 	"github.com/Project-Planner/backend/model"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -335,7 +334,7 @@ func (db database) AddCalendar(ownerID, calName string) error {
 	//―――――――――――――――――――――――――――――――――――――――――――――――――
 	var owner = db.users[ownerID]
 	if err := owner.AssociateCalendar(model.Owner, calID, db); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	return nil
