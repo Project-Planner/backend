@@ -2,6 +2,7 @@ package web
 
 import (
 	"fmt"
+	"github.com/Project-Planner/backend/model"
 	"github.com/gorilla/mux"
 	"io/ioutil"
 	"log"
@@ -9,12 +10,12 @@ import (
 	"strconv"
 )
 
-var db Database
+var db model.Database
 var conf ServerConfig
 var calendarXSL string
 
 // ListenAndServe starts the webserver with the given database implementation and config file
-func ListenAndServe(database Database, configuration ServerConfig) {
+func ListenAndServe(database model.Database, configuration ServerConfig) {
 	db = database
 	conf = configuration
 	c, err := ioutil.ReadFile(conf.HTMLDir + "/data/calendar.xsl")

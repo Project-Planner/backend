@@ -37,12 +37,12 @@ func TestPutAppointmentHandler(t *testing.T) {
 	}{
 		// Kosher case
 		{
-			path:      "/c/appointments/" + testOwner + "/" + testOwner + "/" + myId,
-			authed:    testOwner,
-			code:      http.StatusOK,
+			path:   "/c/appointments/" + testOwner + "/" + testOwner + "/" + myId,
+			authed: testOwner,
+			code:   http.StatusOK,
 			urlValues: map[string]string{
-				"name":      "My Birthday Party",
-				"desc":      "I am partying",
+				"name": "My Birthday Party",
+				"desc": "I am partying",
 			},
 			db: dbMock{setCalendar: func(s string, calendar model.Calendar) error {
 				setCalendar = calendar
@@ -58,12 +58,12 @@ func TestPutAppointmentHandler(t *testing.T) {
 		},
 		// Kosher case empty description
 		{
-			path:      "/c/appointments/" + testOwner + "/" + testOwner + "/" + myId,
-			authed:    testOwner,
-			code:      http.StatusOK,
+			path:   "/c/appointments/" + testOwner + "/" + testOwner + "/" + myId,
+			authed: testOwner,
+			code:   http.StatusOK,
 			urlValues: map[string]string{
-				"name":      "My Birthday Party",
-				"desc":      " ",
+				"name": "My Birthday Party",
+				"desc": " ",
 			},
 			db: dbMock{setCalendar: func(s string, calendar model.Calendar) error {
 				setCalendar = calendar
@@ -166,7 +166,6 @@ func TestPostAppointmentHandler(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 		handler := http.HandlerFunc(postAppointmentHandler)
-
 
 		ctx := context.WithValue(r.Context(), userIDStr, tc.authed)
 		handler.ServeHTTP(rr, r.WithContext(ctx))

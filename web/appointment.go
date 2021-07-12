@@ -88,7 +88,7 @@ func preparePostItem(w http.ResponseWriter, r *http.Request, a model.Identifier,
 }
 
 //preparePutItem handles error reporting and just returns an error to indicate to return early.
-func preparePutItem(w http.ResponseWriter, r *http.Request, err error) (model.Calendar, error){
+func preparePutItem(w http.ResponseWriter, r *http.Request, err error) (model.Calendar, error) {
 	if err != nil && err != model.ErrReqFieldMissing {
 		http.Error(w, "could not parse sent data", http.StatusBadRequest)
 		return model.Calendar{}, err

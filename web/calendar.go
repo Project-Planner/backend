@@ -82,7 +82,7 @@ func putCalendarHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
- 	w.Write([]byte(o.String()))
+	w.Write([]byte(o.String()))
 }
 
 func postCalendarHandler(w http.ResponseWriter, r *http.Request) {
@@ -117,7 +117,7 @@ func postCalendarHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = db.SetCalendar(c.GetID(), c)
+	err = db.AddCalendar(c.Owner.Val, c.GetID())
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "", http.StatusInternalServerError)

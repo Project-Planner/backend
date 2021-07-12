@@ -1,6 +1,9 @@
 port: 80
-static_dir: "./web/statics"     # For linux we recommend "/var/web/plannet/statics"
-html_dir: "./web/html"          # For linux we recommend "/var/web/plannet/html"
+static_dir: "./web/statics"               # For linux we recommend "/var/web/plannet/statics"
+html_dir: "./web/html"                    # For linux we recommend "/var/web/plannet/html"
 authed_path_name: "/c"
-jwt_secret: "abc"               # Use something safer here
-db_root_dir: "./xmldb"          # For linux we recommend "/var/xmldb"
+jwt_secret: "abc"                         # Use something safer here
+db_dir: "/home/llambdaa/Downloads/xmldb"  # For linux we recommend "/var/xmldb"
+auth_dir: "/auth"
+user_dir: "/users"
+calendar_dir: "/calendars"

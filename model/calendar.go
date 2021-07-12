@@ -73,7 +73,7 @@ func NewCalendar(r *http.Request, owner string) (Calendar, error) {
 	c.Permissions.View.User = []Attribute{{Val: owner}}
 	c.Permissions.Edit.User = []Attribute{{Val: owner}}
 
-	c.ID = Attribute{ Val: fmt.Sprintf("%s/%s", c.Owner.Val, c.Name.Val) }
+	c.ID = Attribute{Val: fmt.Sprintf("%s/%s", c.Owner.Val, c.Name.Val)}
 
 	return c, retErr
 }

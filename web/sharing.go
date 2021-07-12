@@ -49,7 +49,7 @@ func sharingHandler(w http.ResponseWriter, r *http.Request) {
 
 	c, err := db.GetCalendar(id)
 	if err == model.ErrNotFound {
-		http.Error(w, "calendar " + id + " not found", http.StatusNotFound)
+		http.Error(w, "calendar "+id+" not found", http.StatusNotFound)
 		return
 	} else if err != nil {
 		log.Println(err)
@@ -86,15 +86,12 @@ func sharingHandler(w http.ResponseWriter, r *http.Request) {
 	// check whether the user has already access to the calendar (view), and based on that add the calendar
 	found := false
 	for _, v := range user.Items.Calendars {
-		if v.Href == id {
+		if v.Link == id {
 			found = true
 		}
 	}
 	if !found {
-		user.Items.Calendars = append(user.Items.Calendars, struct {
-			Text string `xml:",chardata"`
-			Href string `xml:"href,attr"`
-		}{Href: id})
+		user.Items.Calendars = append(user.Items.Calendars, model.CalendarReference{Link: id})
 
 		if err = db.SetUser(userName, user); err != nil {
 			log.Println(err)

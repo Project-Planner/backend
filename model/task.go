@@ -7,20 +7,20 @@ import (
 )
 
 type Task struct {
-	Text string `xml:",chardata"`
-	ID   string `xml:"id,attr"`
-	Name Attribute `xml:"name"`
+	Text      string    `xml:",chardata"`
+	ID        string    `xml:"id,attr"`
+	Name      Attribute `xml:"name"`
 	Milestone struct {
 		Text string `xml:",chardata"`
 		ID   string `xml:"id,attr"`
 	} `xml:"milestone"`
 	StartDate Attribute `xml:"startDate"`
 	StartTime Attribute `xml:"startTime"`
-	Duedate Attribute `xml:"duedate"`
-	Duetime Attribute `xml:"duetime"`
-	Desc     string `xml:"desc"`
-	Subtasks struct {
-		Text    string `xml:",chardata"`
+	Duedate   Attribute `xml:"duedate"`
+	Duetime   Attribute `xml:"duetime"`
+	Desc      string    `xml:"desc"`
+	Subtasks  struct {
+		Text    string    `xml:",chardata"`
 		Subtask []Subtask `xml:"subtask"`
 	} `xml:"subtasks"`
 }
@@ -123,12 +123,12 @@ func (t Task) GetID() string {
 }
 
 type Subtask struct {
-	Text string `xml:",chardata"`
-	ID   string `xml:"id,attr"`
-	Name Attribute `xml:"name"`
+	Text      string    `xml:",chardata"`
+	ID        string    `xml:"id,attr"`
+	Name      Attribute `xml:"name"`
 	StartDate Attribute `xml:"startDate"`
 	StartTime Attribute `xml:"startTime"`
-	Duedate Attribute `xml:"duedate"`
-	Duetime Attribute `xml:"duetime"`
-	Desc string `xml:"desc"`
+	Duedate   Attribute `xml:"duedate"`
+	Duetime   Attribute `xml:"duetime"`
+	Desc      string    `xml:"desc"`
 }

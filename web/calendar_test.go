@@ -169,10 +169,10 @@ func TestGetCalendarHandler(t *testing.T) {
 }
 
 func TestLegalName(t *testing.T) {
-	tt := []struct{
+	tt := []struct {
 		name string
 		want bool
-	} {
+	}{
 		// Kosher case
 		{
 			name: "abcDEF09+-_",

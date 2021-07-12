@@ -317,10 +317,14 @@ func TestRegisterHandler(t *testing.T) {
 
 type dbMock struct {
 	setCalendar func(string, model.Calendar) error
-	data map[string]struct {
+	data        map[string]struct {
 		d interface{}
 		e error
 	}
+}
+
+func (d dbMock) AddCalendar(ownerID, calName string) error {
+	panic("implement me")
 }
 
 func (d dbMock) SetUser(userid string, user model.User) error {
