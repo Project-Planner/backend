@@ -52,7 +52,7 @@ func New(config DBConfig) (database, error) {
 	// Authentication: Each user has his own authentication file containing his
 	//				   login data.
 	logins := make(map[string]model.Login)
-	filepath.Walk(config.AuthDir, func(file string, info os.FileInfo, err error) error {
+	if err := filepath.Walk(config.AuthDir, func(file string, info os.FileInfo, err error) error {
 		var name = info.Name()
 		var index = strings.LastIndex(name, ".xml")
 		if index >= 0 {
@@ -61,11 +61,13 @@ func New(config DBConfig) (database, error) {
 			logins[login.Name.Val] = login
 		}
 		return nil
-	})
+	}); err != nil {
+		return database{}, err
+	}
 
 	// Users: Each user also has its own user file linking to his calendars.
 	users := make(map[string]model.User)
-	filepath.Walk(config.UserDir, func(file string, info os.FileInfo, err error) error {
+	if err := filepath.Walk(config.UserDir, func(file string, info os.FileInfo, err error) error {
 		var name = info.Name()
 		var index = strings.LastIndex(name, ".xml")
 		if index >= 0 {
@@ -74,15 +76,16 @@ func New(config DBConfig) (database, error) {
 			users[user.Name.Val] = user
 		}
 		return nil
-	})
+	}); err != nil {
+		return database{}, err
+	}
 
 	// Calendars: Each calendar has an owner. Hence, it is placed into a folder
 	//			  named after its owner, along with other calendars.
 	calendars := make(map[string]model.Calendar)
-	filepath.Walk(config.CalendarDir, func(folder string, folderInfo os.FileInfo, err error) error {
-
+	if err := filepath.Walk(config.CalendarDir, func(folder string, folderInfo os.FileInfo, err error) error {
 		if folderInfo.IsDir() && folder != config.CalendarDir {
-			filepath.Walk(folder, func(file string, fileInfo os.FileInfo, err error) error {
+			if err := filepath.Walk(folder, func(file string, fileInfo os.FileInfo, err error) error {
 
 				if !fileInfo.IsDir() {
 					var name = fileInfo.Name()
@@ -97,11 +100,15 @@ func New(config DBConfig) (database, error) {
 				}
 				return nil
 
-			})
+			}); err != nil {
+				return err
+			}
 
 		}
 		return nil
-	})
+	}); err != nil {
+		return database{}, err
+	}
 
 	return database{config, logins, users, calendars}, nil
 }
@@ -167,7 +174,9 @@ func (db database) AddUser(userID, hash string) error {
 	//―――――――――――――――――――――――――――――――――――――――――
 	var path = fmt.Sprintf("%s/%s.xml", db.config.AuthDir, userID)
 	var login = model.NewLogin(userID, hash)
-	write(path, login.String())
+	if err := write(path, login.String()); err != nil {
+		return err
+	}
 	db.logins[userID] = login
 
 	//3. Step: Creating initial calendar file. The initial calendar is
@@ -183,7 +192,9 @@ func (db database) AddUser(userID, hash string) error {
 		Name:  model.Attribute{Val: userID},
 		Owner: model.Attribute{Val: userID},
 	}
-	db.setCalendar(calID, calendar)
+	if err := db.setCalendar(calID, calendar); err != nil {
+		return err
+	}
 
 	//4. Step: Creating user file itself, linking initial calendar to it
 	//		   and writing to disk.
@@ -192,7 +203,9 @@ func (db database) AddUser(userID, hash string) error {
 	if err := user.AssociateCalendar(model.Owner, calID, db); err != nil {
 		return err
 	}
-	db.setUser(userID, user)
+	if err := db.setUser(userID, user); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -275,7 +288,9 @@ func (db database) DeleteUser(userID string) error {
 	//5. Step: Writing affected users back.
 	//―――――――――――――――――――――――――――――――――――――――
 	for id, user := range affected {
-		db.setUser(id, user)
+		if err := db.setUser(id, user); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -318,7 +333,9 @@ func (db database) AddCalendar(ownerID, calName string) error {
 	//2. Step: Ensuring that target folders actually exists
 	//		   before creating the new calendar.
 	//―――――――――――――――――――――――――――――――――――――――――――――――――――――――
-	ensureDir(fmt.Sprintf("%s/%s", db.config.CalendarDir, ownerID))
+	if err := ensureDir(fmt.Sprintf("%s/%s", db.config.CalendarDir, ownerID)); err != nil {
+		return err
+	}
 
 	//3. Step: Creating calendar file and registering it
 	//		   in the corresponding collection.
@@ -327,7 +344,9 @@ func (db database) AddCalendar(ownerID, calName string) error {
 		Name:  model.Attribute{Val: calName},
 		Owner: model.Attribute{Val: ownerID},
 	}
-	db.setCalendar(calID, calendar)
+	if err := db.setCalendar(calID, calendar); err != nil {
+		return err
+	}
 
 	//4. Step: Associating calendar to issuing owner
 	//		   and writing back.
@@ -376,7 +395,9 @@ func (db database) DeleteCalendar(calID string) error {
 		user, exists := db.users[userID.Val]
 		if exists {
 			user.DisassociateCalendar(db.config.CalendarDir, calID, cal)
-			db.setUser(user.Name.Val, user)
+			if err := db.setUser(user.Name.Val, user); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -386,7 +407,9 @@ func (db database) DeleteCalendar(calID string) error {
 	var ownerID = cal.Owner.Val
 	var owner = db.users[ownerID]
 	owner.DisassociateCalendar(db.config.CalendarDir, calID, cal)
-	db.setUser(ownerID, owner)
+	if err := db.setUser(ownerID, owner); err != nil {
+		return err
+	}
 	delete(db.calendars, calID)
 
 	return nil
