@@ -58,7 +58,7 @@ func (user *User) DisassociateCalendar(path, calID string, cal Calendar) {
 //AssociateCalendar appends the calendar to the collection of the user's calendars,
 //if it hasn't been associated to the user yet and also links the user in the
 //calendar file itself.
-func (user *User) AssociateCalendar(perm Permission, calID string, db database) error {
+func (user *User) AssociateCalendar(perm Permission, calID string, db Database) error {
 	//If any of the iterated items/calendars has the same id as the calendar to
 	//be associated, an error is thrown, because the element is already there.
 	for _, cal := range user.Items.Calendars {
