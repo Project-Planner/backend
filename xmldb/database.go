@@ -200,10 +200,10 @@ func (db database) AddUser(userID, hash string) error {
 	//		   and writing to disk.
 	//―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 	var user = model.NewUser(userID)
-	if err := user.AssociateCalendar(model.Owner, calID, db); err != nil {
+	if err := db.setUser(userID, user); err != nil {
 		return err
 	}
-	if err := db.setUser(userID, user); err != nil {
+	if err := user.AssociateCalendar(model.Owner, calID, db); err != nil {
 		return err
 	}
 

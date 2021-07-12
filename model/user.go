@@ -76,7 +76,9 @@ func (user *User) AssociateCalendar(perm Permission, calID string, db Database) 
 		Link:    calID,
 	}
 	user.Items.Calendars = append(items, appendix)
-	db.SetUser(userID, *user)
+	if err := db.SetUser(userID, *user); err != nil {
+		return err
+	}
 
 	//Link the user itself to the calendar.
 	var cal, _ = db.GetCalendar(calID)
@@ -96,7 +98,9 @@ func (user *User) AssociateCalendar(perm Permission, calID string, db Database) 
 			cal.Permissions.Edit.User = append(users, entry)
 		}
 	}
-	db.SetCalendar(calID, cal)
+	if err := db.SetCalendar(calID, cal); err != nil {
+		return err
+	}
 
 	return nil
 }
