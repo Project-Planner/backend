@@ -191,7 +191,7 @@ func (db database) AddUser(userID, hash string) error {
 	//―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 	var user = model.NewUser(userID)
 	if err := user.AssociateCalendar(model.Owner, calID, db); err != nil {
-		log.Fatal(err)
+		return err
 	}
 	db.setUser(userID, user)
 
@@ -215,7 +215,7 @@ func (db database) DeleteUser(userID string) error {
 	delete(db.users, userID)
 	var path = fmt.Sprintf("%s/%s.xml", db.config.UserDir, userID)
 	if err := os.Remove(path); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	//3. Step: Deleting authentication file from disk and
@@ -224,14 +224,14 @@ func (db database) DeleteUser(userID string) error {
 	delete(db.logins, userID)
 	path = fmt.Sprintf("%s/%s.xml", db.config.AuthDir, userID)
 	if err := os.Remove(path); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	//4. Step: Delete calendars folder of user to be deleted.
 	//―――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 	path = fmt.Sprintf("%s/%s", db.config.CalendarDir, userID)
 	if err := os.RemoveAll(path); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	//4. Step: Finding referenced users, so that the calendar
