@@ -121,11 +121,15 @@ func TestAddCalendar(t *testing.T) {
 	//―――――――――――――――――――――――――――――――――――――――――
 	var userID = "a"
 	var hash = "hash"
-	db.AddUser(userID, hash)
+	if err := db.AddUser(userID, hash); err != nil {
+		t.Fatal(err)
+	}
 
 	var calName = "test"
 	var calID = fmt.Sprintf("%s/%s", userID, calName)
-	db.AddCalendar(userID, calName)
+	if err := db.AddCalendar(userID, calName); err != nil {
+		t.Fatal(err)
+	}
 
 	//3. Step: Check if calendar is present
 	//		   in collection and on disk.
@@ -169,7 +173,9 @@ func TestGetUser(t *testing.T) {
 	//―――――――――――――――――――――――――――――――――――――――――――――――――
 	var userID1 = "f5932068"
 	var hash = "hash"
-	db.AddUser(userID1, hash)
+	if err := db.AddUser(userID1, hash); err != nil {
+		t.Fatal(err)
+	}
 
 	//Check for first user.
 	//It should be successful, since it
@@ -207,7 +213,9 @@ func TestGetLogin(t *testing.T) {
 	//―――――――――――――――――――――――――――――――――――――――――
 	var userID1 = "f5932068"
 	var hash = "hash"
-	db.AddUser(userID1, hash)
+	if err := db.AddUser(userID1, hash); err != nil {
+		t.Fatal(err)
+	}
 
 	//Check for first login.
 	//It should be successful, since it has
@@ -244,7 +252,9 @@ func TestGetCalendar(t *testing.T) {
 	//――――――――――――――――――――――――――――――――――――――――――――
 	var userID = "f5932068"
 	var hash = "hash"
-	db.AddUser(userID, hash)
+	if err := db.AddUser(userID, hash); err != nil {
+		t.Fatal(err)
+	}
 
 	//Check for first calendar.
 	//It should be successful, since the initial
@@ -282,14 +292,18 @@ func TestSetUser(t *testing.T) {
 	//――――――――――――――――――――――――――――――――――――――――――――――――――
 	var userID = "f5932068"
 	var hash = "hash"
-	db.AddUser(userID, hash)
+	if err := db.AddUser(userID, hash); err != nil {
+		t.Fatal(err)
+	}
 
 	//Retrieve user, modify it and write it back
 	var user, _ = db.GetUser(userID)
 	var replacement = "Notch"
 
 	user.Name.Val = replacement
-	db.SetUser(userID, user)
+	if err := db.SetUser(userID, user); err != nil {
+		t.Fatal(err)
+	}
 
 	//3. Step: Retrieve the user from the collection again
 	//		   and compare its values to ensure that the modified
@@ -304,7 +318,9 @@ func TestSetUser(t *testing.T) {
 	//		   whether the changes have also been written to disk.
 	//―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 	var path = fmt.Sprintf("%s/%s.xml", db.config.UserDir, userID)
-	parse(path, &user)
+	if err := parse(path, &user); err != nil {
+		t.Fatal(err)
+	}
 	if user.Name.Val != replacement {
 		t.Fatal(fmt.Sprintf("Modified user '%s' has not been written to disk.", userID))
 	}
@@ -322,7 +338,9 @@ func TestSetCalendar(t *testing.T) {
 	//――――――――――――――――――――――――――――――――――――――――――――――――――
 	var userID = "f5932068"
 	var hash = "hash"
-	db.AddUser(userID, hash)
+	if err := db.AddUser(userID, hash); err != nil {
+		t.Fatal(err)
+	}
 
 	//Retrieve initial calendar, modify it and write it back
 	var calID = fmt.Sprintf("%s/%s", userID, userID)
@@ -330,7 +348,9 @@ func TestSetCalendar(t *testing.T) {
 	var replacement = "Notch"
 
 	cal.Owner.Val = replacement
-	db.SetCalendar(calID, cal)
+	if err := db.SetCalendar(calID, cal); err != nil {
+		t.Fatal(err)
+	}
 
 	//3. Step: Retrieve the calendar from the collection again
 	//		   and compare its values to ensure that the modified
@@ -345,7 +365,9 @@ func TestSetCalendar(t *testing.T) {
 	//		   whether the changes have also been written to disk.
 	//―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 	var path = fmt.Sprintf("%s/%s/%s.xml", db.config.CalendarDir, userID, userID)
-	parse(path, &cal)
+	if err := parse(path, &cal); err != nil {
+		t.Fatal(err)
+	}
 	if cal.Owner.Val != replacement {
 		t.Fatal(fmt.Sprintf("Modified calendar with id '%s' has not been written to disk.", userID))
 	}
@@ -365,21 +387,32 @@ func TestAssociateCalendar(t *testing.T) {
 	var userID1 = "a"
 	var userID2 = "b"
 	var hash = "hash"
-	db.AddUser(userID1, hash)
-	db.AddUser(userID2, hash)
+	if err := db.AddUser(userID1, hash); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.AddUser(userID2, hash); err != nil {
+		t.Fatal(err)
+	}
 
 	var calID = fmt.Sprintf("%s/%s", userID1, userID1)
+	var cal, _ = db.calendars[calID]
 	var user2, _ = db.GetUser(userID2)
 
-	user2.AssociateCalendar(model.Edit, calID, db)
-	db.SetUser(userID2, user2)
+	if err := db.AssociateCalendar(user2, cal, model.Edit); err != nil {
+		t.Fatal(err)
+	}
+
+	user2, ok := db.users[userID2]
+	if !ok {
+		t.Fatal(fmt.Sprintf("User '%s' cannot be found.", userID2))
+	}
 
 	//3. Step: Check if calendar is listed in
 	//		   user's calendar list.
 	//―――――――――――――――――――――――――――――――――――――――――
 	var foundInUser bool
-	for _, cal := range user2.Items.Calendars {
-		if cal.Link == calID {
+	for _, ref := range user2.Items.Calendars {
+		if ref.Link == calID {
 			foundInUser = true
 			break
 		}
@@ -391,7 +424,7 @@ func TestAssociateCalendar(t *testing.T) {
 
 	//4. Step: Check if calendar has user registered.
 	//――――――――――――――――――――――――――――――――――――――――――――――――
-	var cal, _ = db.GetCalendar(calID)
+	cal, _ = db.GetCalendar(calID)
 	var entries = append(cal.Permissions.Edit.User, cal.Permissions.View.User...)
 	var foundInCalendar bool
 	for _, user := range entries {
@@ -418,8 +451,12 @@ func TestDeleteUser(t *testing.T) {
 	var userID1 = "a"
 	var userID2 = "b"
 	var hash = "hash"
-	db.AddUser(userID1, hash)
-	db.AddUser(userID2, hash)
+	if err := db.AddUser(userID1, hash); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.AddUser(userID2, hash); err != nil {
+		t.Fatal(err)
+	}
 
 	if len(db.users) != 2 || len(db.logins) != 2 || len(db.calendars) != 2 {
 		t.Fatal("Invalid amount of entries in any of the data collections.")
@@ -429,16 +466,25 @@ func TestDeleteUser(t *testing.T) {
 	//		   user to second one.
 	//――――――――――――――――――――――――――――――――――――――――――――――――
 	var calID = fmt.Sprintf("%s/%s", userID1, userID1)
+	var cal, _ = db.calendars[calID]
 	var user2, _ = db.GetUser(userID2)
 
-	user2.AssociateCalendar(model.Edit, calID, db)
-	db.SetUser(userID2, user2)
+	if err := db.AssociateCalendar(user2, cal, model.Edit); err != nil {
+		t.Fatal(err)
+	}
+	user2, ok := db.users[userID2]
+	if !ok {
+		t.Fatal(fmt.Sprintf("User '%s' cannot be found.", userID2))
+	}
 
-	//4. Step: Delete user, check for entry count
-	//		   again, check for files and for
+	//4. Step: Delete user one, check for entry
+	//		   count again, check for files and for
 	//		   association with second user.
 	//―――――――――――――――――――――――――――――――――――――――――――――
-	db.DeleteUser(userID1)
+	if err := db.DeleteUser(userID1); err != nil {
+		t.Fatal(err)
+	}
+
 	if len(db.users) != 1 || len(db.logins) != 1 || len(db.calendars) != 1 {
 		t.Fatal("Invalid amount of entries in any of the data collections.")
 	}
@@ -478,26 +524,38 @@ func TestDeleteCalendar(t *testing.T) {
 	var db = GetDatabase(t)
 	t.Cleanup(func() { DeleteDatabase(db, t) })
 
-	//2. Step: Adding two users and associate the initial
+	//2. Step: Add two users and associate the initial
 	//		   calendar of the first user to the second one.
 	//―――――――――――――――――――――――――――――――――――――――――――――――――――――――
 	var userID1 = "a"
 	var userID2 = "b"
 	var hash = "hash"
-	db.AddUser(userID1, hash)
-	db.AddUser(userID2, hash)
+	if err := db.AddUser(userID1, hash); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.AddUser(userID2, hash); err != nil {
+		t.Fatal(err)
+	}
 
 	//Associate initial calendar of first user to second one.
 	var calID = fmt.Sprintf("%s/%s", userID1, userID1)
+	var cal, _ = db.calendars[calID]
 	var user2, _ = db.GetUser(userID2)
 
-	user2.AssociateCalendar(model.Edit, calID, db)
-	db.SetUser(userID2, user2)
+	if err := db.AssociateCalendar(user2, cal, model.Edit); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.SetUser(userID2, user2); err != nil {
+		t.Fatal(err)
+	}
 
 	//3. Step: Delete calendar, check for entry count and calendar
 	//		   file and if it is still associated to the second user.
 	//―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
-	db.DeleteCalendar(calID)
+	if err := db.DeleteCalendar(calID); err != nil {
+		t.Fatal(err)
+	}
+
 	if len(db.users) != 2 || len(db.logins) != 2 || len(db.calendars) != 1 {
 		t.Fatal("Invalid amount of entries in any of the data collections.")
 	}
