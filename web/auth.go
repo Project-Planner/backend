@@ -47,7 +47,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	http.SetCookie(w, &c)
 
-	w.WriteHeader(http.StatusOK) // possibly redirect to another page later
+	http.Redirect(w, r, "/html/mainPage.html", http.StatusSeeOther)
 }
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
@@ -60,7 +60,7 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 
 	deleteCookie(w, c)
 
-	w.WriteHeader(http.StatusOK) // possibly redirect to another page later
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func deleteUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -86,7 +86,7 @@ func deleteUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	deleteCookie(w, c)
 
-	w.WriteHeader(http.StatusNoContent)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func registerHandler(w http.ResponseWriter, r *http.Request) {
@@ -123,7 +123,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	http.Redirect(w, r, "/html/mainPage.html", http.StatusSeeOther)
 }
 
 func parseForm(w http.ResponseWriter, r *http.Request) (username string, pw string, error error) {
