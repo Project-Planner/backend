@@ -147,7 +147,7 @@ func getUserCalendarsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func legalName(n string) bool {
-	regex := "^[-+_A-Za-z0-9]+$"
+	regex := "^[-_A-Za-z0-9]+$"
 	b, _ := regexp.Match(regex, []byte(n))
 	return b
 }
