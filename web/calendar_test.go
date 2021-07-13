@@ -175,7 +175,7 @@ func TestLegalName(t *testing.T) {
 	}{
 		// Kosher case
 		{
-			name: "abcDEF09+-_",
+			name: "abcDEF09-_",
 			want: true,
 		},
 		// Critical illegal character
