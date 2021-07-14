@@ -13,15 +13,7 @@ import (
 )
 
 func getCalendarXSLHandler(w http.ResponseWriter, r *http.Request) {
-	vars := make([]varXLS, len(r.URL.Query()))
-	i := 0
-	for k, v := range r.URL.Query() {
-		vars[i] = varXLS{
-			name:  k,
-			value: v[0],
-		}
-		i++
-	}
+	vars := allFromURL(r.URL.Query())
 
 	xsl := varsIntoXSL(calendarXSL, vars...)
 
