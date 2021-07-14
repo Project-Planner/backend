@@ -18,7 +18,7 @@ var calendarXSL string
 func ListenAndServe(database model.Database, configuration ServerConfig) {
 	db = database
 	conf = configuration
-	c, err := ioutil.ReadFile(conf.HTMLDir + "/data/calendar.xsl")
+	c, err := ioutil.ReadFile(conf.FrontendDir + "/data/calendar.xsl")
 	if err != nil {
 		panic(err)
 	}
@@ -72,5 +72,5 @@ func registerRoutes(r *mux.Router) {
 	r.HandleFunc("/api/register", registerHandler).Methods("POST")
 
 	// serve static files (index, impressum, login, register ...). Note that this has to be registered last.
-	r.PathPrefix("/").Handler(http.FileServer(http.Dir(conf.StaticDir)))
+	r.PathPrefix("/").Handler(http.FileServer(http.Dir(conf.FrontendDir)))
 }
