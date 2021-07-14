@@ -13,7 +13,7 @@ import (
 )
 
 func getCalendarXSLHandler(w http.ResponseWriter, r *http.Request) {
-	sendXSL(w, r, calendarXSL)
+	sendXSL(w, r, loaded.calendar)
 }
 
 func getCalendarHandler(w http.ResponseWriter, r *http.Request) {
