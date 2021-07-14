@@ -13,19 +13,7 @@ import (
 )
 
 func getCalendarXSLHandler(w http.ResponseWriter, r *http.Request) {
-	vars := make([]varXLS, len(r.URL.Query()))
-	i := 0
-	for k, v := range r.URL.Query() {
-		vars[i] = varXLS{
-			name:  k,
-			value: v[0],
-		}
-		i++
-	}
-
-	xsl := varsIntoXSL(calendarXSL, vars...)
-
-	w.Write([]byte(xsl))
+	sendXSL(w, r, loaded.calendar)
 }
 
 func getCalendarHandler(w http.ResponseWriter, r *http.Request) {
@@ -146,8 +134,17 @@ func getUserCalendarsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
+// sendXSL sends the given xsl with the URL query params from r. No further call is required
+func sendXSL(w http.ResponseWriter, r *http.Request, xsl string) {
+	vars := allFromURL(r.URL.Query())
+
+	newXSL := varsIntoXSL(xsl, vars...)
+
+	w.Write([]byte(newXSL))
+}
+
 func legalName(n string) bool {
-	regex := "^[-+_A-Za-z0-9]+$"
+	regex := "^[-_A-Za-z0-9]+$"
 	b, _ := regexp.Match(regex, []byte(n))
 	return b
 }

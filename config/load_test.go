@@ -13,7 +13,7 @@ func TestLoad(t *testing.T) {
 	}
 
 	want := "./web/statics"
-	if c.StaticDir != want {
-		t.Fatal("static dir not parsed correctly, want: " + want + " got: " + c.StaticDir)
+	if c.FrontendDir != want {
+		t.Fatal("static dir not parsed correctly, want: " + want + " got: " + c.FrontendDir)
 	}
 }

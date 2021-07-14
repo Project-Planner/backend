@@ -21,6 +21,10 @@ type database struct {
 //necessary folders actually exists before parsing their content into the database struct.
 //After this process, the returned struct is a 1-by-1 depiction of the current system status.
 func New(config DBConfig) (database, error) {
+	// Set the "constants" here to make the config file simpler
+	config.AuthRelDir = "/auth"
+	config.UserRelDir = "/users"
+	config.CalendarRelDir = "/calendars"
 
 	//1. Step: Expanding configuration file (e.g. constructing absolute paths
 	//		   from relative paths)

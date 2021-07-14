@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/Project-Planner/backend/model"
 	"github.com/gorilla/mux"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
@@ -12,17 +11,14 @@ import (
 
 var db model.Database
 var conf ServerConfig
-var calendarXSL string
 
 // ListenAndServe starts the webserver with the given database implementation and config file
 func ListenAndServe(database model.Database, configuration ServerConfig) {
 	db = database
 	conf = configuration
-	c, err := ioutil.ReadFile(conf.HTMLDir + "/data/calendar.xsl")
-	if err != nil {
-		panic(err)
-	}
-	calendarXSL = string(c)
+
+	// loads templates
+	load()
 
 	// create a new router to attach routes to. Redirect to proper routes without trailing slash
 	r := mux.NewRouter().StrictSlash(true)
@@ -72,5 +68,5 @@ func registerRoutes(r *mux.Router) {
 	r.HandleFunc("/api/register", registerHandler).Methods("POST")
 
 	// serve static files (index, impressum, login, register ...). Note that this has to be registered last.
-	r.PathPrefix("/").Handler(http.FileServer(http.Dir(conf.StaticDir)))
+	r.PathPrefix("/").Handler(http.FileServer(http.Dir(conf.FrontendDir)))
 }
