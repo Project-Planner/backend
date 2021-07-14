@@ -2,15 +2,16 @@ package web
 
 import "io/ioutil"
 
-type loadedXSL struct {
+var loaded struct {
 	calendar string
 	editItem string
 }
 
-var loaded loadedXSL
-
 func load() {
-	loaded = loadedXSL{}
+	loaded = struct {
+		calendar string
+		editItem string
+	}{}
 
 	c, err := ioutil.ReadFile(conf.FrontendDir + "/data/calendar.xsl")
 	if err != nil {
