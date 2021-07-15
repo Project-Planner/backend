@@ -67,7 +67,7 @@ func TestLoginHandler(t *testing.T) {
 		{
 			pw:   "supersafepassword%&$",
 			un:   "someusername",
-			code: http.StatusOK,
+			code: http.StatusSeeOther,
 			db:   userFoundDB,
 			form: okForm,
 		},
@@ -248,7 +248,7 @@ func TestRegisterHandler(t *testing.T) {
 			un:   "otherUsername",
 			pw:   pw,
 			db:   okDB,
-			code: http.StatusCreated,
+			code: http.StatusSeeOther,
 		},
 		// Username already exists
 		{
