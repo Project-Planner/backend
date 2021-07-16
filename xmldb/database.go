@@ -550,6 +550,7 @@ func (db database) AssociateCalendar(user model.User, cal model.Calendar, perm m
 	var appendix = model.CalendarReference{
 		XMLName: xml.Name{Local: "calendar"},
 		Link:    calID,
+		Perm: 	 perm.String(),
 	}
 	user.Items.Calendars = append(items, appendix)
 	if err := db.setUser(userID, user); err != nil {
