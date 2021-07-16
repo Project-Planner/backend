@@ -18,6 +18,7 @@ type Items struct {
 type CalendarReference struct {
 	XMLName xml.Name `xml:"calendar"`
 	Link    string   `xml:"href,attr"`
+	Perm 	Permission `xml:"perm,attr"`
 }
 
 func NewUser(name string) User {

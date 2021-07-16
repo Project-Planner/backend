@@ -184,7 +184,7 @@ func getCalendarIfPermission(w http.ResponseWriter, r *http.Request, minPerm mod
 		return model.Calendar{}, retErr
 	}
 
-	perm := calendarPermissions(c, authedUser)
+	perm := model.CalendarPermissions(c, authedUser)
 
 	if perm < minPerm {
 		http.Error(w, "no permissions to view/edit/create this item", http.StatusForbidden)
