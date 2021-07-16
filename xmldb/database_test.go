@@ -87,7 +87,8 @@ func TestAddUser(t *testing.T) {
 	//3. Step: Check if parsing has gone wrong.
 	//――――――――――――――――――――――――――――――――――――――――――
 	var user = db.users[userID]
-	if user.Name.Val != userID || len(user.Items.Calendars) != 1 || user.Items.Calendars[0].Link != calID {
+	if user.Name.Val != userID || len(user.Items.Calendars) != 1 ||
+		user.Items.Calendars[0].Link != calID || user.Items.Calendars[0].Perm != model.Owner.String() {
 		t.Fatal(fmt.Sprintf("User struct for user '%s' contains invalid data.", userID))
 	}
 
@@ -407,13 +408,19 @@ func TestAssociateCalendar(t *testing.T) {
 		t.Fatal(fmt.Sprintf("User '%s' cannot be found.", userID2))
 	}
 
-	//3. Step: Check if calendar is listed in
-	//		   user's calendar list.
-	//―――――――――――――――――――――――――――――――――――――――――
+	//3. Step: Check if calendar is listed in user's
+	//		   calendar list with right permission.
+	//―――――――――――――――――――――――――――――――――――――――――――――――
 	var foundInUser bool
 	for _, ref := range user2.Items.Calendars {
 		if ref.Link == calID {
 			foundInUser = true
+
+			//Check if user has right permission associated.
+			if ref.Perm != model.Edit.String() {
+				t.Fatal(fmt.Sprintf("User '%s' has wrong permission associated for calendar '%s'.", userID2, calID))
+			}
+
 			break
 		}
 	}

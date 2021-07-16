@@ -11,10 +11,14 @@ const (
 
 func (p Permission) String() string {
 	switch p {
-	case None: return "none"
-	case Read: return "view"
-	case Edit: return "edit"
-	case Owner: return "owner"
+	case None:
+		return "none"
+	case Read:
+		return "view"
+	case Edit:
+		return "edit"
+	case Owner:
+		return "owner"
 	}
 	panic("permission: string: not implemented")
 }
