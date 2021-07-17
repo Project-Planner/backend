@@ -1,6 +1,9 @@
 package web
 
-import "io/ioutil"
+import (
+	"html/template"
+	"io/ioutil"
+)
 
 var loaded struct {
 	calendar string
@@ -13,6 +16,7 @@ func load() {
 		editItem string
 	}{}
 
+	// loading the xsl into memory as they are queried very often
 	c, err := ioutil.ReadFile(conf.FrontendDir + "/data/calendar.xsl")
 	if err != nil {
 		panic(err)
@@ -24,4 +28,11 @@ func load() {
 		panic(err)
 	}
 	loaded.editItem = string(c)
+
+	// Loading the template for fancy error reporting
+	tmpl, err := ioutil.ReadFile(conf.FrontendDir + "/html/error.html")
+	if err != nil {
+		panic(err)
+	}
+	errTemplate = template.Must(template.New("error").Parse(string(tmpl)))
 }
