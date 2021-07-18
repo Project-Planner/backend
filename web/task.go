@@ -14,7 +14,7 @@ func postTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	c.Items.Tasks.Task = append(c.Items.Tasks.Task, i)
 
-	finishItem(w, c, i, http.StatusCreated)
+	finishItem(w, r, c)
 }
 
 func putTaskHandler(w http.ResponseWriter, r *http.Request) {
@@ -39,7 +39,7 @@ func putTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	items[idx].Update(a)
 
-	finishItem(w, c, items[idx], http.StatusOK)
+	finishItem(w, r, c)
 }
 
 func deleteTaskHandler(w http.ResponseWriter, r *http.Request) {
@@ -63,5 +63,5 @@ func deleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 	items[idx] = items[len(items)-1]
 	c.Items.Tasks.Task = items[:len(items)-1]
 
-	finishItem(w, c, nil, http.StatusNoContent)
+	finishItem(w, r, c)
 }

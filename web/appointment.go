@@ -3,7 +3,6 @@ package web
 import (
 	"encoding/xml"
 	"errors"
-	"fmt"
 	"github.com/Project-Planner/backend/model"
 	"github.com/gorilla/mux"
 	"log"
@@ -19,7 +18,7 @@ func postAppointmentHandler(w http.ResponseWriter, r *http.Request) {
 
 	c.Items.Appointments.Appointment = append(c.Items.Appointments.Appointment, i)
 
-	finishItem(w, c, i, http.StatusCreated)
+	finishItem(w, r, c)
 }
 
 func putAppointmentHandler(w http.ResponseWriter, r *http.Request) {
@@ -44,7 +43,7 @@ func putAppointmentHandler(w http.ResponseWriter, r *http.Request) {
 
 	items[idx].Update(a)
 
-	finishItem(w, c, items[idx], http.StatusOK)
+	finishItem(w, r, c)
 }
 
 func deleteAppointmentHandler(w http.ResponseWriter, r *http.Request) {
@@ -68,7 +67,7 @@ func deleteAppointmentHandler(w http.ResponseWriter, r *http.Request) {
 	items[idx] = items[len(items)-1]
 	c.Items.Appointments.Appointment = items[:len(items)-1]
 
-	finishItem(w, c, nil, http.StatusNoContent)
+	finishItem(w, r, c)
 }
 
 //preparePostItem handles error reporting and just returns an error to indicate to return early.
@@ -98,7 +97,7 @@ func preparePutItem(w http.ResponseWriter, r *http.Request, err error) (model.Ca
 	return getCalendarIfPermission(w, r, model.Edit)
 }
 
-func finishItem(w http.ResponseWriter, c model.Calendar, i fmt.Stringer, status int) {
+func finishItem(w http.ResponseWriter, r *http.Request, c model.Calendar) {
 	err := db.SetCalendar(c.ID.Val, c)
 	if err != nil {
 		log.Println(err)
@@ -106,10 +105,7 @@ func finishItem(w http.ResponseWriter, c model.Calendar, i fmt.Stringer, status 
 		return
 	}
 
-	w.WriteHeader(status)
-	if status != http.StatusNoContent && i != nil {
-		w.Write([]byte(i.String()))
-	}
+	http.Redirect(w, r, "/me/c/" + c.ID.Val + "?" + r.URL.RawQuery, http.StatusSeeOther)
 }
 
 // itemIdx returns the index of the requested id in arr (by ID) and handles error reporting. Return -1 means,
