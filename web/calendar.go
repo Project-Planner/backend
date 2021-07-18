@@ -28,11 +28,11 @@ func getCalendarHandler(w http.ResponseWriter, r *http.Request) {
 	var xslLink string
 	switch m {
 	case "project":
-		xslLink = "/projectView.xsl"
+		xslLink = "/projectView.xsl?"
 	case "calendar":
-		xslLink = "/calendar.xsl"
+		xslLink = "/calendar.xsl?"
 	default:
-		panic(m + " not implemented")
+		log.Println(m + " not implemented.")
 	}
 
 	xmlRaw, _ := xml.Marshal(c)
