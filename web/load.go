@@ -7,12 +7,14 @@ import (
 
 var loaded struct {
 	calendar string
+	project  string
 	editItem string
 }
 
 func load() {
 	loaded = struct {
 		calendar string
+		project  string
 		editItem string
 	}{}
 
@@ -28,6 +30,12 @@ func load() {
 		panic(err)
 	}
 	loaded.editItem = string(c)
+
+	c, err = ioutil.ReadFile(conf.FrontendDir + "/data/projectView.xsl")
+	if err != nil {
+		panic(err)
+	}
+	loaded.project = string(c)
 
 	// Loading the template for fancy error reporting
 	tmpl, err := ioutil.ReadFile(conf.FrontendDir + "/html/error.html")

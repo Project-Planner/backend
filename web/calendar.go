@@ -12,8 +12,10 @@ import (
 	"strings"
 )
 
-func getCalendarXSLHandler(w http.ResponseWriter, r *http.Request) {
-	sendXSL(w, r, loaded.calendar)
+func loadedXSLHandler(xsl string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		sendXSL(w, r, xsl)
+	})
 }
 
 func getCalendarHandler(w http.ResponseWriter, r *http.Request) {
@@ -22,8 +24,19 @@ func getCalendarHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	m := r.URL.Query().Get("mode")
+	var xslLink string
+	switch m {
+	case "project":
+		xslLink = "/projectView.xsl"
+	case "calendar":
+		xslLink = "/calendar.xsl"
+	default:
+		panic(m + " not implemented")
+	}
+
 	xmlRaw, _ := xml.Marshal(c)
-	xmlStr := addStylesheet(string(xmlRaw), conf.AuthedPathName+"/calendar.xsl?"+r.URL.RawQuery)
+	xmlStr := addStylesheet(string(xmlRaw), conf.AuthedPathName+xslLink+r.URL.RawQuery)
 
 	w.Write([]byte(xmlStr))
 }
