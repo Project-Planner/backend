@@ -82,8 +82,7 @@ func putCalendarHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(o.String()))
+	http.Redirect(w, r, "/html/mainPage.html", http.StatusSeeOther)
 }
 
 func postCalendarHandler(w http.ResponseWriter, r *http.Request) {

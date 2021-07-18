@@ -106,5 +106,5 @@ func sharingHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	http.Redirect(w, r, "/me/calendars", http.StatusSeeOther)
 }
