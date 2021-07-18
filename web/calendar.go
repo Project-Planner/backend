@@ -32,7 +32,7 @@ func getCalendarHandler(w http.ResponseWriter, r *http.Request) {
 	case "calendar":
 		xslLink = "/calendar.xsl?"
 	default:
-		log.Println(m + " not implemented.")
+		xslLink = "/calendar.xsl?"
 	}
 
 	xmlRaw, _ := xml.Marshal(c)
