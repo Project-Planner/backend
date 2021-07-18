@@ -62,7 +62,7 @@ func deleteCalendarHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	http.Redirect(w, r, "/me/calendars", http.StatusSeeOther)
 }
 
 func putCalendarHandler(w http.ResponseWriter, r *http.Request) {
@@ -125,8 +125,7 @@ func postCalendarHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(c.String()))
+	http.Redirect(w, r, "/html/mainPage.html", http.StatusSeeOther)
 }
 
 func getUserCalendarsHandler(w http.ResponseWriter, r *http.Request) {
@@ -144,7 +143,9 @@ func getUserCalendarsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	b, _ := xml.Marshal(u)
-	w.Write(b)
+	xmlStr := addStylesheet(string(b), conf.AuthedPathName+"/showCalendars.xsl?"+r.URL.RawQuery)
+
+	w.Write([]byte(xmlStr))
 }
 
 // sendXSL sends the given xsl with the URL query params from r. No further call is required
