@@ -43,6 +43,7 @@ func registerRoutes(r *mux.Router) {
 	authed.HandleFunc("/c", getCalendarHandler).Methods("GET")
 	authed.Handle("/calendar.xsl", loadedXSLHandler(loaded.calendar)).Methods("GET")
 	authed.Handle("/projectView.xsl", loadedXSLHandler(loaded.project)).Methods("GET")
+	authed.Handle("/editItem.xsl", loadedXSLHandler(loaded.editItem)).Methods("GET")
 
 	//Get all Calendars of User
 	authed.HandleFunc("/calendars", getUserCalendarsHandler).Methods("GET")

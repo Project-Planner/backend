@@ -27,6 +27,8 @@ func getCalendarHandler(w http.ResponseWriter, r *http.Request) {
 	m := r.URL.Query().Get("mode")
 	var xslLink string
 	switch m {
+	case "edit":
+		xslLink = "/editItem.xsl?"
 	case "project":
 		xslLink = "/projectView.xsl?"
 	case "calendar":
