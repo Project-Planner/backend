@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 var db model.Database
@@ -50,15 +51,14 @@ func registerRoutes(r *mux.Router) {
 	authed.Handle("/showCalendars.xsl", loadedXSLHandler(loaded.showCalendars)).Methods("GET")
 
 	// Modify Calendar
-	authed.HandleFunc("/c", postCalendarHandler).Methods("POST")
-	authed.HandleFunc(fmt.Sprintf("/c/{%s}/{%s}", userIDStr, calendarIDStr), deleteCalendarHandler).Methods("DELETE")
-	authed.HandleFunc(fmt.Sprintf("/c/{%s}", calendarIDStr), deleteCalendarHandler).Methods("DELETE")
-	authed.HandleFunc(fmt.Sprintf("/c/{%s}/{%s}", userIDStr, calendarIDStr), putCalendarHandler).Methods("PUT")
-	authed.HandleFunc(fmt.Sprintf("/c/{%s}", calendarIDStr), putCalendarHandler).Methods("PUT")
-	authed.HandleFunc("/c", putCalendarHandler).Methods("PUT")
+	authed.HandleFunc("/c", methodHandler(postCalendarHandler, putCalendarHandler, nil)).Methods("POST")
+	authed.HandleFunc(fmt.Sprintf("/c/{%s}/{%s}", userIDStr, calendarIDStr),
+		methodHandler(nil, putCalendarHandler, deleteCalendarHandler)).Methods("POST")
+	authed.HandleFunc(fmt.Sprintf("/c/{%s}", calendarIDStr),
+		methodHandler(nil, putCalendarHandler, deleteCalendarHandler)).Methods("POST")
 
 	// Delete User
-	authed.HandleFunc("/api/user", deleteUserHandler).Methods("DELETE")
+	authed.HandleFunc("/api/user", methodHandler(nil, nil, deleteUserHandler)).Methods("POST")
 
 	authed.HandleFunc("/api/sharing", sharingHandler).Methods("POST")
 
@@ -72,4 +72,35 @@ func registerRoutes(r *mux.Router) {
 
 	// serve static files (index, impressum, login, register ...). Note that this has to be registered last.
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir(conf.FrontendDir)))
+}
+
+func methodHandler(post, put, delete http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Parse HTML form from body
+		if err := r.ParseForm(); err != nil {
+			http.Error(w, "couldn't parse form", http.StatusBadRequest)
+			return
+		}
+
+		vs, ok := r.Form["_method"]
+		if !ok || len(vs) != 1 {
+			post(w, r) // default
+			return
+		}
+
+		method := strings.ToUpper(vs[0])
+		switch method {
+		case "PUT":
+			put(w,r)
+			return
+		case "DELETE":
+			delete(w,r)
+			return
+		case "POST":
+			fallthrough
+		default:
+			post(w,r)
+			return
+		}
+	})
 }

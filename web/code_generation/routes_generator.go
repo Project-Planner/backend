@@ -23,17 +23,36 @@ func attachEndpoints(r *mux.Router) {
 {{- $items := .Items -}}
 {{- range $idxI, $item := $items}}
 	{{lowerCasePlural $item}}Router := r.PathPrefix("/api/{{lowerCasePlural $item}}").Subrouter()
-{{ range $idxM, $method := $methods }}
-{{- if isPost $method }}
-	{{lowerCasePlural $item}}Router.HandleFunc(fmt.Sprintf("/{%s}/{%s}", userIDStr, calendarIDStr), post{{$item}}Handler).Methods("POST")
-	{{lowerCasePlural $item}}Router.HandleFunc(fmt.Sprintf("/{%s}", calendarIDStr), post{{$item}}Handler).Methods("POST")
-	{{lowerCasePlural $item}}Router.HandleFunc("/", post{{$item}}Handler).Methods("POST")
-{{else}}
-	{{lowerCasePlural $item}}Router.HandleFunc(fmt.Sprintf("/{%s}/{%s}/{%s}", userIDStr, calendarIDStr, itemIDStr), {{lowerCase $method}}{{$item}}Handler).Methods("{{$method}}")
-	{{lowerCasePlural $item}}Router.HandleFunc(fmt.Sprintf("/{%s}/{%s}", calendarIDStr, itemIDStr), {{lowerCase $method}}{{$item}}Handler).Methods("{{$method}}")
-	{{lowerCasePlural $item}}Router.HandleFunc(fmt.Sprintf("/{%s}", itemIDStr), {{lowerCase $method}}{{$item}}Handler).Methods("{{$method}}")
-{{ end }}
-{{- end }}
+
+	{{lowerCasePlural $item}}Router.HandleFunc(fmt.Sprintf("/post/{%s}/{%s}", userIDStr, calendarIDStr), post{{$item}}Handler).Methods("POST")
+	{{lowerCasePlural $item}}Router.HandleFunc(fmt.Sprintf("/post/{%s}", calendarIDStr), post{{$item}}Handler).Methods("POST")
+	{{lowerCasePlural $item}}Router.HandleFunc("/post", post{{$item}}Handler).Methods("POST")
+
+	{{lowerCasePlural $item}}Router.HandleFunc(fmt.Sprintf("/other/{%s}/{%s}/{%s}", userIDStr, calendarIDStr, itemIDStr), methodHandler(nil
+{{- range $idxM, $method := $methods -}}
+{{- if isPost $method -}}
+{{- else -}}
+	, {{lowerCase $method}}{{$item}}Handler
+{{- end -}}
+{{- end -}}
+	)).Methods("POST")	
+	{{lowerCasePlural $item}}Router.HandleFunc(fmt.Sprintf("/other/{%s}/{%s}", calendarIDStr, itemIDStr), methodHandler(nil 
+{{- range $idxM, $method := $methods -}}
+{{- if isPost $method -}}
+{{- else -}}
+	, {{lowerCase $method}}{{$item}}Handler
+{{- end -}}
+{{- end -}}
+	)).Methods("POST")
+	{{lowerCasePlural $item}}Router.HandleFunc(fmt.Sprintf("/other/{%s}", itemIDStr), methodHandler(nil 
+{{- range $idxM, $method := $methods -}}
+{{- if isPost $method -}}
+{{- else -}}
+	, {{lowerCase $method}}{{$item}}Handler
+{{- end -}}
+{{- end -}}
+	)).Methods("POST")
+
 {{ end }}
 }
 `
