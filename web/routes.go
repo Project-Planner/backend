@@ -78,7 +78,7 @@ func methodHandler(post, put, delete http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Parse HTML form from body
 		if err := r.ParseForm(); err != nil {
-			http.Error(w, "couldn't parse form", http.StatusBadRequest)
+			writeError(w, "couldn't parse form", http.StatusBadRequest)
 			return
 		}
 

@@ -74,10 +74,10 @@ func deleteAppointmentHandler(w http.ResponseWriter, r *http.Request) {
 func preparePostItem(w http.ResponseWriter, r *http.Request, a model.Identifier, err error) (model.Calendar, error) {
 	if err == model.ErrReqFieldMissing {
 		aXML, _ := xml.Marshal(a)
-		http.Error(w, "required field was missing, got:\n"+string(aXML), http.StatusUnprocessableEntity)
+		writeError(w, "required field was missing, got:\n"+string(aXML), http.StatusUnprocessableEntity)
 		return model.Calendar{}, err
 	} else if err != nil {
-		http.Error(w, "could not parse sent data", http.StatusBadRequest)
+		writeError(w, "could not parse sent data", http.StatusBadRequest)
 		return model.Calendar{}, err
 	}
 
@@ -89,7 +89,7 @@ func preparePostItem(w http.ResponseWriter, r *http.Request, a model.Identifier,
 //preparePutItem handles error reporting and just returns an error to indicate to return early.
 func preparePutItem(w http.ResponseWriter, r *http.Request, err error) (model.Calendar, error) {
 	if err != nil && err != model.ErrReqFieldMissing {
-		http.Error(w, "could not parse sent data", http.StatusBadRequest)
+		writeError(w, "could not parse sent data", http.StatusBadRequest)
 		return model.Calendar{}, err
 	}
 
@@ -101,7 +101,7 @@ func finishItem(w http.ResponseWriter, r *http.Request, c model.Calendar) {
 	err := db.SetCalendar(c.ID.Val, c)
 	if err != nil {
 		log.Println(err)
-		http.Error(w, "", http.StatusInternalServerError)
+		writeError(w, "", http.StatusInternalServerError)
 		return
 	}
 
@@ -114,7 +114,7 @@ func finishItem(w http.ResponseWriter, r *http.Request, c model.Calendar) {
 func itemIdx(w http.ResponseWriter, r *http.Request, arr ...model.Identifier) (int, error) {
 	id, ok := mux.Vars(r)[itemIDStr]
 	if !ok {
-		http.Error(w, "id of item missing", http.StatusBadRequest)
+		writeError(w, "id of item missing", http.StatusBadRequest)
 		return -1, errors.New("bad request")
 	}
 
@@ -126,7 +126,7 @@ func itemIdx(w http.ResponseWriter, r *http.Request, arr ...model.Identifier) (i
 		}
 	}
 	if idx == -1 {
-		http.Error(w, "item with given id not found", http.StatusNotFound)
+		writeError(w, "item with given id not found", http.StatusNotFound)
 		return idx, model.ErrNotFound
 	}
 

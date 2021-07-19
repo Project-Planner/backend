@@ -50,17 +50,17 @@ func deleteCalendarHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if c.Name.Val == c.Owner.Val {
-		http.Error(w, "you must not delete default calendar", http.StatusMethodNotAllowed)
+		writeError(w, "you must not delete default calendar", http.StatusMethodNotAllowed)
 		return
 	}
 
 	err = db.DeleteCalendar(c.GetID())
 	if err == model.ErrNotFound {
-		http.Error(w, "calendar not found", http.StatusNotFound)
+		writeError(w, "calendar not found", http.StatusNotFound)
 		return
 	} else if err != nil {
 		log.Println(err)
-		http.Error(w, "", http.StatusInternalServerError)
+		writeError(w, "", http.StatusInternalServerError)
 		return
 	}
 
@@ -80,7 +80,7 @@ func putCalendarHandler(w http.ResponseWriter, r *http.Request) {
 	err = db.SetCalendar(c.ID.Val, c)
 	if err != nil {
 		log.Println(err)
-		http.Error(w, "", http.StatusInternalServerError)
+		writeError(w, "", http.StatusInternalServerError)
 		return
 	}
 
@@ -90,39 +90,39 @@ func putCalendarHandler(w http.ResponseWriter, r *http.Request) {
 func postCalendarHandler(w http.ResponseWriter, r *http.Request) {
 	authedUser, ok := r.Context().Value(userIDStr).(string)
 	if !ok {
-		http.Error(w, "", http.StatusUnauthorized)
+		writeError(w, "", http.StatusUnauthorized)
 		return
 	}
 
 	c, err := model.NewCalendar(r, authedUser)
 	if err == model.ErrReqFieldMissing {
 		aXML, _ := xml.Marshal(c)
-		http.Error(w, "required field was missing, got:\n"+string(aXML), http.StatusUnprocessableEntity)
+		writeError(w, "required field was missing, got:\n"+string(aXML), http.StatusUnprocessableEntity)
 		return
 	} else if err != nil {
-		http.Error(w, "could not parse sent data", http.StatusBadRequest)
+		writeError(w, "could not parse sent data", http.StatusBadRequest)
 		return
 	}
 
 	if !legalName(c.Name.Val) {
-		http.Error(w, "illegal name", http.StatusUnprocessableEntity)
+		writeError(w, "illegal name", http.StatusUnprocessableEntity)
 		return
 	}
 
 	_, err = db.GetCalendar(c.GetID())
 	if err != nil && err != model.ErrNotFound {
-		http.Error(w, "", http.StatusInternalServerError)
+		writeError(w, "", http.StatusInternalServerError)
 		log.Println(err)
 		return
 	} else if err == nil {
-		http.Error(w, "calendar already exists", http.StatusConflict)
+		writeError(w, "calendar already exists", http.StatusConflict)
 		return
 	}
 
 	err = db.AddCalendar(c.Owner.Val, c.GetID())
 	if err != nil {
 		log.Println(err)
-		http.Error(w, "", http.StatusInternalServerError)
+		writeError(w, "", http.StatusInternalServerError)
 		return
 	}
 
@@ -132,14 +132,14 @@ func postCalendarHandler(w http.ResponseWriter, r *http.Request) {
 func getUserCalendarsHandler(w http.ResponseWriter, r *http.Request) {
 	userid, ok := r.Context().Value(userIDStr).(string)
 	if !ok {
-		http.Error(w, "", http.StatusUnauthorized)
+		writeError(w, "", http.StatusUnauthorized)
 		return
 	}
 
 	u, err := db.GetUser(userid)
 	if err != nil {
 		fmt.Println(err)
-		http.Error(w, "", http.StatusInternalServerError)
+		writeError(w, "", http.StatusInternalServerError)
 		return
 	}
 
@@ -165,7 +165,7 @@ func legalName(n string) bool {
 }
 
 //getCalendarIfPermission returns the requested calendar, after it has checked whether the minPerm are met by the
-// requesting account. If err != nil is returned, then this error has already been dealt with via http.Error and
+// requesting account. If err != nil is returned, then this error has already been dealt with via writeError and
 // is just returned to indicate a guard statement early return.
 func getCalendarIfPermission(w http.ResponseWriter, r *http.Request, minPerm model.Permission) (model.Calendar, error) {
 	retErr := errors.New("error already reported")
@@ -173,7 +173,7 @@ func getCalendarIfPermission(w http.ResponseWriter, r *http.Request, minPerm mod
 	v := mux.Vars(r)
 	authedUser, ok := r.Context().Value(userIDStr).(string)
 	if !ok {
-		http.Error(w, "", http.StatusUnauthorized)
+		writeError(w, "", http.StatusUnauthorized)
 		return model.Calendar{}, retErr
 	}
 
@@ -188,10 +188,10 @@ func getCalendarIfPermission(w http.ResponseWriter, r *http.Request, minPerm mod
 
 	c, err := db.GetCalendar(uID + "/" + cID)
 	if err == model.ErrNotFound {
-		http.Error(w, "", http.StatusNotFound)
+		writeError(w, "", http.StatusNotFound)
 		return model.Calendar{}, retErr
 	} else if err != nil {
-		http.Error(w, "", http.StatusInternalServerError)
+		writeError(w, "", http.StatusInternalServerError)
 		log.Println(err)
 		return model.Calendar{}, retErr
 	}
@@ -199,7 +199,7 @@ func getCalendarIfPermission(w http.ResponseWriter, r *http.Request, minPerm mod
 	perm := calendarPermissions(c, authedUser)
 
 	if perm < minPerm {
-		http.Error(w, "no permissions to view/edit/create this item", http.StatusForbidden)
+		writeError(w, "no permissions to view/edit/create this item", http.StatusForbidden)
 		return model.Calendar{}, retErr
 	}
 
