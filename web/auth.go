@@ -142,7 +142,7 @@ func parseForm(w http.ResponseWriter, r *http.Request) (username string, pw stri
 		return
 	}
 	pws, ok := r.Form["password"]
-	if !ok || len(pws) != 1 {
+	if !ok {
 		http.Error(w, "password missing, html input must have name 'password'", http.StatusUnprocessableEntity)
 		return
 	}
