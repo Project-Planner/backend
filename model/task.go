@@ -54,13 +54,13 @@ func NewTask(r *http.Request) (Task, error) {
 		t.StartTime = Attribute{Val: vs[0]}
 	}
 
-	if vs, ok := r.Form["duedate"]; !ok || len(vs) != 1 {
+	if vs, ok := r.Form["endDate"]; !ok || len(vs) != 1 {
 		retErr = ErrReqFieldMissing
 	} else {
 		t.Duedate = Attribute{Val: vs[0]}
 	}
 
-	if vs, ok := r.Form["duetime"]; !ok || len(vs) != 1 {
+	if vs, ok := r.Form["endTime"]; !ok || len(vs) != 1 {
 		retErr = ErrReqFieldMissing
 	} else {
 		t.Duetime = Attribute{Val: vs[0]}

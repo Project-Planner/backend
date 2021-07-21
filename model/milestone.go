@@ -32,13 +32,13 @@ func NewMilestone(r *http.Request) (Milestone, error) {
 		m.Name = Attribute{Val: vs[0]}
 	}
 
-	if vs, ok := r.Form["duedate"]; !ok || len(vs) != 1 {
+	if vs, ok := r.Form["endDate"]; !ok || len(vs) != 1 {
 		retErr = ErrReqFieldMissing
 	} else {
 		m.Duedate = Attribute{Val: vs[0]}
 	}
 
-	if vs, ok := r.Form["duetime"]; !ok || len(vs) != 1 {
+	if vs, ok := r.Form["endTime"]; !ok || len(vs) != 1 {
 		retErr = ErrReqFieldMissing
 	} else {
 		m.Duetime = Attribute{Val: vs[0]}
