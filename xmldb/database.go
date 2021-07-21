@@ -35,6 +35,7 @@ func New(config DBConfig) (database, error) {
 	//1. Step: Expanding configuration file (e.g. constructing absolute paths
 	//		   from relative paths)
 	//―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+
 	config.AuthDir = fmt.Sprintf("%s%s", config.DBDir, config.AuthRelDir)
 	config.UserDir = fmt.Sprintf("%s%s", config.DBDir, config.UserRelDir)
 	config.CalendarDir = fmt.Sprintf("%s%s", config.DBDir, config.CalendarRelDir)
@@ -146,10 +147,12 @@ func (db database) GetUser(userID string) (model.User, error) {
 	return val, nil
 }
 
-//SetUser sets the given user to the given @userID
-//only if the user actually exists.
+//SetUser is the synchronized version of setUser used
+//for concurrent modification.
+//Furthermore, it only executes its internal variant
+//if the user yet exists.
 func (db database) SetUser(userID string, user model.User) error {
-	//Retrieve mutex and lock resource
+	//Obtain mutex and lock resource
 	var mutex, ok = db.mutexes[userID]
 	if !ok {
 		return model.ErrNotFound
@@ -158,17 +161,17 @@ func (db database) SetUser(userID string, user model.User) error {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	//Write user struct if it
-	//actually is registered
+	//Overwrite only if the user yet exists
 	if _, err := db.GetUser(userID); err != nil {
 		return err
 	}
 	return db.setUser(userID, user)
 }
 
-//setUser sets the given user to the given @userID.
-//This overwrites any existing user or creates a new one,
-//on the disk as well as in the collection.
+//setUser writes the given user data for the user
+//with the given @userID. This function overwrites any
+//existing user file or creates a new one; on the disk
+//as well as in the collection.
 func (db database) setUser(userID string, user model.User) error {
 	var path = fmt.Sprintf("%s/%s.xml", db.config.UserDir, userID)
 	var err = write(path, user.String())
@@ -176,25 +179,28 @@ func (db database) setUser(userID string, user model.User) error {
 	return err
 }
 
-//AddUser creates a new user by creating the user file itself, the
-//user's authentication file and an initial calendar file.
+//AddUser makes a new user by creating respective files
+//(user file, authentication file, initial calendar file)
+//and registering its newly created resources along with
+//their locks in the collections.
 func (db database) AddUser(userID, hash string) error {
-	//1. Step: Register user mutex and lock the resource.
-	//――――――――――――――――――――――――――――――――――――――――――――――――――――
-	var userLock sync.Mutex
-	db.mutexes[userID] = &userLock
-	userLock.Lock()
-	defer userLock.Unlock()
-
-	//2. Step: Check whether user is already registered.
-	//―――――――――――――――――――――――――――――――――――――――――――――――――――――
-	if _, err := db.GetUser(userID); err == nil {
+	//1. Step: Check whether user is already registered
+	//		   before creating resources multiple times.
+	//―――――――――――――――――――――――――――――――――――――――――――――――――――
+	if _, ok := db.mutexes[userID]; !ok {
+		//2. Step: Make mutex and lock resources.
+		//――――――――――――――――――――――――――――――――――――――――
+		var mutex = new(sync.Mutex)
+		db.mutexes[userID] = mutex
+		mutex.Lock()
+		defer mutex.Unlock()
+	} else {
 		return model.ErrAlreadyExists
 	}
 
-	//3. Step: Ensure that target folders actually exists
-	//		   before creating the new user.
-	//―――――――――――――――――――――――――――――――――――――――――――――――――――――
+	//3. Step: Ensure that target folders actually
+	// 		   exists before creating the new user.
+	//――――――――――――――――――――――――――――――――――――――――――――――
 	if err := ensureDir(db.config.DBDir); err != nil {
 		return err
 	}
@@ -211,8 +217,9 @@ func (db database) AddUser(userID, hash string) error {
 		return err
 	}
 
-	//4. Step: Create authentication file.
-	//―――――――――――――――――――――――――――――――――――――
+	//4. Step: Make authentication file and
+	//		   register resource in collection.
+	//――――――――――――――――――――――――――――――――――――――――――
 	var path = fmt.Sprintf("%s/%s.xml", db.config.AuthDir, userID)
 	var login = model.NewLogin(userID, hash)
 	if err := write(path, login.String()); err != nil {
@@ -220,85 +227,61 @@ func (db database) AddUser(userID, hash string) error {
 	}
 	db.logins[userID] = login
 
-	//5. Step: Register calendar lock and create initial calendar.
-	//		   The initial calendar is placed in a folder
-	//   	   dedicated for this user.
-	//―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
-	var calID = fmt.Sprintf("%s/%s", userID, userID)
-
-	//Register calendar lock
-	var calLock sync.Mutex
-	db.mutexes[calID] = &calLock
-
-	//Ensure parent directory of calendar file
-	path = fmt.Sprintf("%s/%s", db.config.CalendarDir, userID)
-	if err := ensureDir(path); err != nil {
-		return err
-	}
-
-	//Write calendar struct to disk
-	var cal = model.Calendar{
-		Name:  model.Attribute{Val: userID},
-		Owner: model.Attribute{Val: userID},
-	}
-	if err := db.setCalendar(calID, cal); err != nil {
-		return err
-	}
-
-	//6. Step: Create user file itself, linking initial
-	//		   calendar to it and writing to disk.
-	//―――――――――――――――――――――――――――――――――――――――――――――――――――
+	//5. Step: Make user file itself and
+	//		   register resource in collection.
+	//――――――――――――――――――――――――――――――――――――――――――
 	var user = model.NewUser(userID)
-	if err := db.AssociateCalendar(user, cal, model.Owner); err != nil {
+	db.users[userID] = user
+
+	//6. Step: Associate owner and initial calendar by adding
+	//		   the initial calendar to the user.
+	//		   (this implies initially writing to disk and
+	//		   collection since included in called function).
+	//――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+	if err := db.addCalendar(userID, userID); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-//DeleteUser not only deletes a user itself, but also his authentication file
-//and his calendars. Since the calendar can be referenced by multiple users,
-//these users must also be found and disassociated from the calendar.
+//DeleteUser deletes the user itself, its authentication file and his
+//calendars. Since calendars can be referenced by multiple other users,
+//these must be found in order to remove their references to the calendars
+//to be deleted.
 func (db database) DeleteUser(userID string) error {
-	//1. Step: Retrieve mutex and lock resource and
-	//		   defer call to also delete lock.
-	//――――――――――――――――――――――――――――――――――――――――――――――
-	var lock = db.mutexes[userID]
-	lock.Lock()
-	defer lock.Unlock()
+	//1. Step: Check whether user actually exists,
+	//		   before deleting the resource and
+	//		   lock resource.
+	//―――――――――――――――――――――――――――――――――――――――――――――
+	var mutex, ok = db.mutexes[userID]
+	if !ok {
+		return model.ErrNotFound
+	}
+	mutex.Lock()
+	defer mutex.Unlock()
 	defer delete(db.mutexes, userID)
 
-	//2. Step: Check whether user is already registered.
-	//―――――――――――――――――――――――――――――――――――――――――――――――――――
+	//3. Step: Delete authentication file from disk and
+	//         from the authentication collection.
+	//――――――――――――――――――――――――――――――――――――――――――――――――――
+	delete(db.logins, userID)
+	var path = fmt.Sprintf("%s/%s.xml", db.config.AuthDir, userID)
+	if err := os.Remove(path); err != nil {
+		return err
+	}
+
+	//4. Step: Delete the user's calendars and remove
+	//		   their references in the other users' files.
+	//――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+	// The user to be deleted has some calendars referenced.
+	// These are checked whether the user is their owner before
+	// also deleting them.
 	owner, ok := db.users[userID]
 	if !ok {
 		return model.ErrNotFound
 	}
 
-	//3. Step: Delete user file itself from disk and
-	//		   from the user collection.
-	//――――――――――――――――――――――――――――――――――――――――――――――――
-	delete(db.users, userID)
-	var path = fmt.Sprintf("%s/%s.xml", db.config.UserDir, userID)
-	if err := os.Remove(path); err != nil {
-		return err
-	}
-
-	//4. Step: Delete authentication file from disk and
-	//         from the authentication collection.
-	//――――――――――――――――――――――――――――――――――――――――――――――――――
-	delete(db.logins, userID)
-	path = fmt.Sprintf("%s/%s.xml", db.config.AuthDir, userID)
-	if err := os.Remove(path); err != nil {
-		return err
-	}
-
-	//5. Step: Find referenced users, so that the calendar
-	//		   can be disassociated in their user files.
-	//――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
-	// The user to be deleted has some calendars referenced.
-	// These are checked whether the user is their owner before
-	// also deleting them.
 	for _, reference := range owner.Items.Calendars {
 		var calID = reference.Link
 		var cal, ok = db.calendars[calID]
@@ -306,26 +289,29 @@ func (db database) DeleteUser(userID string) error {
 			continue
 		}
 
-		//Going through all users with VIEW and EDIT permissions for
-		//this calendar, and editing user struct on the fly.
-		for _, userID := range append(cal.Permissions.View.User, cal.Permissions.Edit.User...) {
-			var user, exists = db.users[userID.Val]
-			if !exists {
-				continue
-			}
-
-			if err := db.DisassociateCalendar(user, cal); err != nil {
-				return err
-			}
+		//Delete the calendar and disconnect it
+		//from referenced users.
+		var calLock = db.mutexes[calID]
+		calLock.Lock()
+		if err := db.deleteCalendar(calID); err != nil {
+			return err
 		}
-
-		delete(db.calendars, calID)
+		calLock.Unlock()
 	}
 
-	//6. Step: Delete calendars folder of user to be deleted.
+	//5. Step: Delete calendars folder of user to be deleted.
 	//―――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 	path = fmt.Sprintf("%s/%s", db.config.CalendarDir, userID)
 	if err := os.RemoveAll(path); err != nil {
+		return err
+	}
+
+	//2. Step: Delete user file itself from disk and
+	//		   from the user collection.
+	//――――――――――――――――――――――――――――――――――――――――――――――――
+	delete(db.users, userID)
+	path = fmt.Sprintf("%s/%s.xml", db.config.UserDir, userID)
+	if err := os.Remove(path); err != nil {
 		return err
 	}
 
@@ -356,20 +342,38 @@ func (db database) GetCalendar(calID string) (model.Calendar, error) {
 	return val, nil
 }
 
-//AddCalendar creates a new calendar and appends it to the owner's
-//collection of calendars.
+//AddCalendar is the synchronized version of addCalendar
+//used for concurrent modification.
 func (db database) AddCalendar(ownerID, calName string) error {
-	//1. Step: Register mutex for this resource and lock it.
-	//―――――――――――――――――――――――――――――――――――――――――――――――――――――――
-	var calID = fmt.Sprintf("%s/%s", ownerID, calName)
-	var lock sync.Mutex
-	db.mutexes[calID] = &lock
-	lock.Lock()
-	defer lock.Unlock()
+	//Obtain mutexes
+	var mutex, ok = db.mutexes[ownerID]
+	if !ok {
+		return model.ErrNotFound
+	}
 
-	//2. Step: Check whether calendar already exists.
-	//――――――――――――――――――――――――――――――――――――――――――――――――
-	if _, ok := db.calendars[calID]; ok {
+	//Lock resources
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	//Call unsafe method
+	return db.addCalendar(ownerID, calName)
+}
+
+//addCalendar makes a new calendar and appends it to the owner's
+//collection of calendars.
+func (db database) addCalendar(ownerID, calName string) error {
+	//1. Step: Check whether the calendar is already registered
+	//		   before creating resources multiple times.
+	//――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+	var calID = fmt.Sprintf("%s/%s", ownerID, calName)
+	if _, ok := db.mutexes[calID]; !ok {
+		//2. Step: Make mutex and lock resources.
+		//――――――――――――――――――――――――――――――――――――――――
+		var mutex = new(sync.Mutex)
+		db.mutexes[calID] = mutex
+		mutex.Lock()
+		defer mutex.Unlock()
+	} else {
 		return model.ErrAlreadyExists
 	}
 
@@ -380,22 +384,16 @@ func (db database) AddCalendar(ownerID, calName string) error {
 		return err
 	}
 
-	//3. Step: Create calendar file and registering it
-	//		   in the corresponding collection.
-	//――――――――――――――――――――――――――――――――――――――――――――――――――
+	//4. Step: Make basic calendar and associate
+	//		   it to the owner.
+	//―――――――――――――――――――――――――――――――――――――――――――
 	var cal = model.Calendar{
 		Name:  model.Attribute{Val: calName},
 		Owner: model.Attribute{Val: ownerID},
 	}
-	if err := db.setCalendar(calID, cal); err != nil {
-		return err
-	}
 
-	//4. Step: Associate calendar to issuing owner
-	//		   and writing back.
-	//――――――――――――――――――――――――――――――――――――――――――――――
 	var owner = db.users[ownerID]
-	if err := db.AssociateCalendar(owner, cal, model.Owner); err != nil {
+	if err := db.associateCalendar(owner, cal, model.Owner); err != nil {
 		return err
 	}
 
@@ -404,8 +402,10 @@ func (db database) AddCalendar(ownerID, calName string) error {
 
 //SetCalendar sets the given calendar to the given @calID
 //only if the calendar already exists.
+//Furthermore, it only executes its internal variant
+//if the calendar yet exists.
 func (db database) SetCalendar(calID string, cal model.Calendar) error {
-	//Retrieve mutex and lock resource
+	//Obtain mutex and lock resource
 	var mutex, ok = db.mutexes[calID]
 	if !ok {
 		return model.ErrNotFound
@@ -432,56 +432,113 @@ func (db database) setCalendar(calID string, cal model.Calendar) error {
 	return err
 }
 
-//DeleteCalendar not only deletes the calendar file behind @calendarID, but
-//also removes references to this file.
+//DeleteCalendar is the synchronized version of deleteCalendar
+//used for concurrent modification.
 func (db database) DeleteCalendar(calID string) error {
-	//1. Step: Retrieve mutex and lock resource and
-	//		   defer call to also delete lock.
-	//――――――――――――――――――――――――――――――――――――――――――――――
-	var lock = db.mutexes[calID]
-	lock.Lock()
-	defer lock.Unlock()
-	defer delete(db.mutexes, calID)
+	//Obtain mutexes
+	var calMutex, ok = db.mutexes[calID]
+	if !ok {
+		return model.ErrNotFound
+	}
 
-	//2. Step: Check whether calendar actually exists.
+	var ownerID = strings.Split(calID, "/")[0]
+	ownerMutex, ok := db.mutexes[ownerID]
+	if !ok {
+		return model.ErrNotFound
+	}
+
+	//Lock resources
+	calMutex.Lock()
+	defer calMutex.Unlock()
+
+	ownerMutex.Lock()
+	defer ownerMutex.Unlock()
+
+	//Call unsafe method
+	return db.deleteCalendar(calID)
+}
+
+//deleteCalendar deletes the calendar file behind @calID and removes
+//links in the referenced user files.
+func (db database) deleteCalendar(calID string) error {
+	//1. Step: Check whether calendar actually exists
+	//		   before deleting the resource and lock
+	//		   resource.
 	//―――――――――――――――――――――――――――――――――――――――――――――――――
+	if _, ok := db.mutexes[calID]; !ok {
+		return model.ErrNotFound
+	}
+
+	//2. Step: Find referenced users and disassociate them from
+	//		   from the calendar and then delete the calendar itself.
+	//		   Each user resource must also be locked before modification.
+	//―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 	cal, ok := db.calendars[calID]
 	if !ok {
 		return model.ErrNotFound
 	}
 
-	//3. Step: Find referenced users and disassociating them from
-	//		   the calendar to be deleted and deleting the calendar.
-	//―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 	for _, userID := range append(cal.Permissions.View.User, cal.Permissions.Edit.User...) {
 		user, exists := db.users[userID.Val]
 		if exists {
-			if err := db.DisassociateCalendar(user, cal); err != nil {
+			//Locking the user at this point is crucial
+			//in order to prevent write errors when
+			//calling following unsafe functions
+			var userMutex = db.mutexes[userID.Val]
+			userMutex.Lock()
+			if err := db.disassociateCalendar(user, cal); err != nil {
 				return err
 			}
-			if err := db.SetUser(user.Name.Val, user); err != nil {
-				return err
-			}
+			userMutex.Unlock()
 		}
 	}
 
-	//The owner itself is not part of the permission list, since there is no need -
-	//he automatically has all permissions. He must be called separately, so that
-	//the calendar file can be deleted.
+	//The owner itself is not part of the permission list, since there is no need;
+	//he automatically has all permissions. He must be disassociated separately,
+	//so that the calendar file can be deleted.
 	var ownerID = cal.Owner.Val
 	var owner = db.users[ownerID]
-	if err := db.DisassociateCalendar(owner, cal); err != nil {
+	if err := db.disassociateCalendar(owner, cal); err != nil {
 		return err
 	}
+
 	delete(db.calendars, calID)
+	delete(db.mutexes, calID)
 
 	return nil
 }
 
-//DisassociateCalendar removes the calendar from the users collection of
-//calendars, so that the updated version can be written back to disk.
-//Furthermore, if the user is the owner of the calendar, the original file is also deleted.
+//DisassociateCalendar is the synchronized version of disassociateCalendar
+//used for concurrent modification.
 func (db database) DisassociateCalendar(user model.User, cal model.Calendar) error {
+	//Obtain mutexes
+	userMutex, ok := db.mutexes[user.Name.Val]
+	if !ok {
+		return model.ErrNotFound
+	}
+
+	var calID = fmt.Sprintf("%s/%s", cal.Owner.Val, cal.Name.Val)
+	calMutex, ok := db.mutexes[calID]
+	if !ok {
+		return model.ErrNotFound
+	}
+
+	//Lock resources
+	userMutex.Lock()
+	defer userMutex.Unlock()
+
+	calMutex.Lock()
+	defer calMutex.Unlock()
+
+	//Call unsafe method
+	return db.disassociateCalendar(user, cal)
+}
+
+//disassociateCalendar removes the calendar from the user's collection of
+//calendars, so that the updated version can be written back to disk.
+//Furthermore, if the user is the owner of the calendar, the original file
+//is also deleted.
+func (db database) disassociateCalendar(user model.User, cal model.Calendar) error {
 	var userID = user.Name.Val
 	var calID = fmt.Sprintf("%s/%s", cal.Owner.Val, cal.Name.Val)
 	var items = user.Items.Calendars
@@ -536,10 +593,36 @@ func (db database) DisassociateCalendar(user model.User, cal model.Calendar) err
 	return nil
 }
 
-//AssociateCalendar appends the calendar to the collection of the user's calendars,
-//if it hasn't been associated to the user yet and also links the user in the
-//calendar file itself.
+//AssociateCalendar is the synchronized version of associatedCalendar
+//used for concurrent modification.
 func (db database) AssociateCalendar(user model.User, cal model.Calendar, perm model.Permission) error {
+	//Obtain mutexes
+	userMutex, ok := db.mutexes[user.Name.Val]
+	if !ok {
+		return model.ErrNotFound
+	}
+
+	var calID = fmt.Sprintf("%s/%s", cal.Owner.Val, cal.Name.Val)
+	calMutex, ok := db.mutexes[calID]
+	if !ok {
+		return model.ErrNotFound
+	}
+
+	//Lock resources
+	userMutex.Lock()
+	defer userMutex.Unlock()
+
+	calMutex.Lock()
+	defer calMutex.Unlock()
+
+	//Call unsafe method
+	return db.associateCalendar(user, cal, perm)
+}
+
+//associateCalendar appends the calendar to the collection of the user's calendars,
+//if it hasn't been associated to this user yet and also links the references the
+//user in the calendar file itself.
+func (db database) associateCalendar(user model.User, cal model.Calendar, perm model.Permission) error {
 	//If any of the iterated items/calendars has the same id as the calendar to
 	//be associated, an error is thrown, because the element is already there.
 	var userID = user.Name.Val
@@ -556,7 +639,7 @@ func (db database) AssociateCalendar(user model.User, cal model.Calendar, perm m
 	var appendix = model.CalendarReference{
 		XMLName: xml.Name{Local: "calendar"},
 		Link:    calID,
-		Perm: 	 perm.String(),
+		Perm:    perm.String(),
 	}
 	user.Items.Calendars = append(items, appendix)
 	if err := db.setUser(userID, user); err != nil {
