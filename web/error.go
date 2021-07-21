@@ -9,6 +9,8 @@ import (
 var errTemplate *template.Template
 
 func writeError(w http.ResponseWriter, msg string, code int) {
+	w.WriteHeader(code)
+
 	if errTemplate == nil {
 		http.Error(w, msg, code)
 		return
@@ -22,6 +24,4 @@ func writeError(w http.ResponseWriter, msg string, code int) {
 	if err != nil {
 		fmt.Println(err)
 	}
-
-	w.WriteHeader(code)
 }
