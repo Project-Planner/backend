@@ -160,10 +160,12 @@ func TestGetCalendarHandler(t *testing.T) {
 			t.Fatalf("wrong status code: got: %d want: %d \n%s\n%v", rr.Code, tc.code, rr.Body.String(), tc)
 		}
 
+		w0 := fmt.Sprintf(`href="%s"`, conf.AuthedPathName+"/calendar.xsl"+tc.urlParams)
+		w1 := fmt.Sprintf(`href="%s"`, conf.AuthedPathName+"/projectView.xsl"+tc.urlParams)
 		if tc.code == http.StatusOK &&
-			!strings.Contains(rr.Body.String(),
-				fmt.Sprintf(`href="%s"`, conf.AuthedPathName+"/calendar.xsl"+tc.urlParams)) {
-			t.Fatalf("url params not added successfully. Got: %s \nIn test case %v", rr.Body.String(), tc)
+			!strings.Contains(rr.Body.String(), w0) &&
+				!strings.Contains(rr.Body.String(), w1) {
+			t.Fatalf("url params not added successfully. Got: %s \nWant contain: %s\nOr want contain: %s\nIn test case %v", rr.Body.String(), w0, w1, tc)
 		}
 	}
 }
@@ -175,7 +177,7 @@ func TestLegalName(t *testing.T) {
 	}{
 		// Kosher case
 		{
-			name: "abcDEF09+-_",
+			name: "abcDEF09-_",
 			want: true,
 		},
 		// Critical illegal character

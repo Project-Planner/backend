@@ -3,7 +3,6 @@ package web
 import (
 	"encoding/xml"
 	"errors"
-	"fmt"
 	"github.com/Project-Planner/backend/model"
 	"github.com/gorilla/mux"
 	"log"
@@ -19,7 +18,7 @@ func postAppointmentHandler(w http.ResponseWriter, r *http.Request) {
 
 	c.Items.Appointments.Appointment = append(c.Items.Appointments.Appointment, i)
 
-	finishItem(w, c, i, http.StatusCreated)
+	finishItem(w, r, c)
 }
 
 func putAppointmentHandler(w http.ResponseWriter, r *http.Request) {
@@ -44,7 +43,7 @@ func putAppointmentHandler(w http.ResponseWriter, r *http.Request) {
 
 	items[idx].Update(a)
 
-	finishItem(w, c, items[idx], http.StatusOK)
+	finishItem(w, r, c)
 }
 
 func deleteAppointmentHandler(w http.ResponseWriter, r *http.Request) {
@@ -68,17 +67,17 @@ func deleteAppointmentHandler(w http.ResponseWriter, r *http.Request) {
 	items[idx] = items[len(items)-1]
 	c.Items.Appointments.Appointment = items[:len(items)-1]
 
-	finishItem(w, c, nil, http.StatusNoContent)
+	finishItem(w, r, c)
 }
 
 //preparePostItem handles error reporting and just returns an error to indicate to return early.
 func preparePostItem(w http.ResponseWriter, r *http.Request, a model.Identifier, err error) (model.Calendar, error) {
 	if err == model.ErrReqFieldMissing {
 		aXML, _ := xml.Marshal(a)
-		http.Error(w, "required field was missing, got:\n"+string(aXML), http.StatusUnprocessableEntity)
+		writeError(w, "required field was missing, got:\n"+string(aXML), http.StatusUnprocessableEntity)
 		return model.Calendar{}, err
 	} else if err != nil {
-		http.Error(w, "could not parse sent data", http.StatusBadRequest)
+		writeError(w, "could not parse sent data", http.StatusBadRequest)
 		return model.Calendar{}, err
 	}
 
@@ -90,7 +89,7 @@ func preparePostItem(w http.ResponseWriter, r *http.Request, a model.Identifier,
 //preparePutItem handles error reporting and just returns an error to indicate to return early.
 func preparePutItem(w http.ResponseWriter, r *http.Request, err error) (model.Calendar, error) {
 	if err != nil && err != model.ErrReqFieldMissing {
-		http.Error(w, "could not parse sent data", http.StatusBadRequest)
+		writeError(w, "could not parse sent data", http.StatusBadRequest)
 		return model.Calendar{}, err
 	}
 
@@ -98,18 +97,15 @@ func preparePutItem(w http.ResponseWriter, r *http.Request, err error) (model.Ca
 	return getCalendarIfPermission(w, r, model.Edit)
 }
 
-func finishItem(w http.ResponseWriter, c model.Calendar, i fmt.Stringer, status int) {
+func finishItem(w http.ResponseWriter, r *http.Request, c model.Calendar) {
 	err := db.SetCalendar(c.ID.Val, c)
 	if err != nil {
 		log.Println(err)
-		http.Error(w, "", http.StatusInternalServerError)
+		writeError(w, "", http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(status)
-	if status != http.StatusNoContent && i != nil {
-		w.Write([]byte(i.String()))
-	}
+	http.Redirect(w, r, "/me/c/" + c.ID.Val + "?" + r.URL.RawQuery, http.StatusSeeOther)
 }
 
 // itemIdx returns the index of the requested id in arr (by ID) and handles error reporting. Return -1 means,
@@ -118,7 +114,7 @@ func finishItem(w http.ResponseWriter, c model.Calendar, i fmt.Stringer, status 
 func itemIdx(w http.ResponseWriter, r *http.Request, arr ...model.Identifier) (int, error) {
 	id, ok := mux.Vars(r)[itemIDStr]
 	if !ok {
-		http.Error(w, "id of item missing", http.StatusBadRequest)
+		writeError(w, "id of item missing", http.StatusBadRequest)
 		return -1, errors.New("bad request")
 	}
 
@@ -130,7 +126,7 @@ func itemIdx(w http.ResponseWriter, r *http.Request, arr ...model.Identifier) (i
 		}
 	}
 	if idx == -1 {
-		http.Error(w, "item with given id not found", http.StatusNotFound)
+		writeError(w, "item with given id not found", http.StatusNotFound)
 		return idx, model.ErrNotFound
 	}
 

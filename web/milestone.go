@@ -14,7 +14,7 @@ func postMilestoneHandler(w http.ResponseWriter, r *http.Request) {
 
 	c.Items.Milestones.Milestone = append(c.Items.Milestones.Milestone, i)
 
-	finishItem(w, c, i, http.StatusCreated)
+	finishItem(w, r, c)
 }
 
 func putMilestoneHandler(w http.ResponseWriter, r *http.Request) {
@@ -39,7 +39,7 @@ func putMilestoneHandler(w http.ResponseWriter, r *http.Request) {
 
 	items[idx].Update(a)
 
-	finishItem(w, c, items[idx], http.StatusOK)
+	finishItem(w, r, c)
 }
 
 func deleteMilestoneHandler(w http.ResponseWriter, r *http.Request) {
@@ -63,5 +63,5 @@ func deleteMilestoneHandler(w http.ResponseWriter, r *http.Request) {
 	items[idx] = items[len(items)-1]
 	c.Items.Milestones.Milestone = items[:len(items)-1]
 
-	finishItem(w, c, nil, http.StatusNoContent)
+	finishItem(w, r, c)
 }
