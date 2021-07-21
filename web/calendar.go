@@ -119,7 +119,7 @@ func postCalendarHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = db.AddCalendar(c.Owner.Val, c.GetID())
+	err = db.AddCalendar(c.Owner.Val, c.Name.Val)
 	if err != nil {
 		log.Println(err)
 		writeError(w, "", http.StatusInternalServerError)
