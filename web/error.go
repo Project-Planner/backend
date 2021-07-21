@@ -16,9 +16,9 @@ func writeError(w http.ResponseWriter, msg string, code int) {
 
 	err := errTemplate.Execute(w, struct {
 		DetailedError string
-		Code          string
+		StatusCode    string
 		Status        string
-	}{DetailedError: msg, Code: fmt.Sprint(code), Status: http.StatusText(code)})
+	}{DetailedError: msg, StatusCode: fmt.Sprint(code), Status: http.StatusText(code)})
 	if err != nil {
 		fmt.Println(err)
 	}
