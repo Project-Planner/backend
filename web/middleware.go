@@ -16,7 +16,7 @@ func auth(next http.Handler) http.Handler {
 		func(w http.ResponseWriter, r *http.Request) {
 			c, err := r.Cookie(authStr)
 			if err != nil {
-				http.Error(w, "no authentication token (jwt) provided, please log in.\n"+err.Error(),
+				writeError(w, "no authentication token (jwt) provided, please log in.\n"+err.Error(),
 					http.StatusUnauthorized)
 				return
 			}
@@ -24,31 +24,31 @@ func auth(next http.Handler) http.Handler {
 			t, err := parseTokenAndVerifySignature(c.Value)
 			if err != nil {
 				log.Println(err)
-				http.Error(w, "untrusted signature, please log in again.", http.StatusUnauthorized)
+				writeError(w, "untrusted signature, please log in again.", http.StatusUnauthorized)
 				return
 			}
 
 			claims, ok := t.Claims.(jwt.MapClaims)
 			if !ok || !t.Valid {
-				http.Error(w, "token invalid, please log in again", http.StatusUnauthorized)
+				writeError(w, "token invalid, please log in again", http.StatusUnauthorized)
 				return
 			}
 
 			uid, ok := claims[userIDStr]
 			userID, cast := uid.(string)
 			if !ok || !cast {
-				http.Error(w, "user_id missing", http.StatusUnauthorized)
+				writeError(w, "user_id missing", http.StatusUnauthorized)
 				return
 			}
 			exp, ok := claims[expiryStr]
 			expiry, err := strconv.ParseInt(fmt.Sprintf("%.f", exp), 10, 64)
 			if !ok || err != nil {
-				http.Error(w, "expiry date missing", http.StatusUnauthorized)
+				writeError(w, "expiry date missing", http.StatusUnauthorized)
 				return
 			}
 			if time.Now().Unix() > expiry {
 				deleteCookie(w, c)
-				http.Error(w, "your session has expired, please log in again", http.StatusUnauthorized)
+				writeError(w, "your session has expired, please log in again", http.StatusUnauthorized)
 				return
 			}
 

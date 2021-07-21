@@ -19,22 +19,22 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	l, err := db.GetLogin(username)
 	if err == model.ErrNotFound {
-		http.Error(w, errIncorrect.Error(), http.StatusUnauthorized)
+		writeError(w, errIncorrect.Error(), http.StatusUnauthorized)
 		return
 	} else if err != nil {
-		http.Error(w, "", http.StatusInternalServerError)
+		writeError(w, "", http.StatusInternalServerError)
 		log.Println(err)
 		return
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(l.Hash.Val), []byte(pw)); err != nil {
-		http.Error(w, errIncorrect.Error(), http.StatusUnauthorized)
+		writeError(w, errIncorrect.Error(), http.StatusUnauthorized)
 		return
 	}
 
 	t, err := createToken(username)
 	if err != nil {
-		http.Error(w, "", http.StatusInternalServerError)
+		writeError(w, "", http.StatusInternalServerError)
 		log.Println(err)
 		return
 	}
@@ -44,49 +44,50 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		Value:    t,
 		Expires:  time.Now().Add(jwtDuration),
 		HttpOnly: true,
+		Path: conf.AuthedPathName,
 	}
 	http.SetCookie(w, &c)
 
-	w.WriteHeader(http.StatusOK) // possibly redirect to another page later
+	http.Redirect(w, r, "/html/mainPage.html", http.StatusSeeOther)
 }
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
 	c, err := r.Cookie(authStr)
 	if err != nil {
-		http.Error(w, "no authentication token (jwt) provided, please log in.\n"+err.Error(),
+		writeError(w, "no authentication token (jwt) provided, please log in.\n"+err.Error(),
 			http.StatusUnauthorized)
 		return
 	}
 
 	deleteCookie(w, c)
 
-	w.WriteHeader(http.StatusOK) // possibly redirect to another page later
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func deleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	userid, ok := r.Context().Value(userIDStr).(string)
 	if !ok {
-		http.Error(w, "", http.StatusUnauthorized)
+		writeError(w, "", http.StatusUnauthorized)
 		return
 	}
 
 	err := db.DeleteUser(userid)
 	if err != nil {
 		log.Println(err)
-		http.Error(w, "", http.StatusInternalServerError)
+		writeError(w, "", http.StatusInternalServerError)
 		return
 	}
 
 	c, err := r.Cookie(authStr)
 	if err != nil {
-		http.Error(w, "no authentication token (jwt) provided, please log in.\n"+err.Error(),
+		writeError(w, "no authentication token (jwt) provided, please log in.\n"+err.Error(),
 			http.StatusUnauthorized)
 		return
 	}
 
 	deleteCookie(w, c)
 
-	w.WriteHeader(http.StatusNoContent)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func registerHandler(w http.ResponseWriter, r *http.Request) {
@@ -97,33 +98,33 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 
 	_, err = db.GetLogin(username)
 	if err != nil && err != model.ErrNotFound {
-		http.Error(w, "", http.StatusInternalServerError)
+		writeError(w, "", http.StatusInternalServerError)
 		log.Println(err)
 		return
 	} else if err == nil {
-		http.Error(w, "username already exists", http.StatusConflict)
+		writeError(w, "username already exists", http.StatusConflict)
 		return
 	}
 
 	if !legalName(username) {
-		http.Error(w, "illegal name", http.StatusUnprocessableEntity)
+		writeError(w, "illegal name", http.StatusUnprocessableEntity)
 		return
 	}
 
 	hashed, err := bcrypt.GenerateFromPassword([]byte(pw), 14)
 	if err != nil {
-		http.Error(w, "", http.StatusInternalServerError)
+		writeError(w, "", http.StatusInternalServerError)
 		log.Println(err)
 		return
 	}
 
 	if err := db.AddUser(username, string(hashed)); err != nil {
-		http.Error(w, "", http.StatusInternalServerError)
+		writeError(w, "", http.StatusInternalServerError)
 		log.Println(err)
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	http.Redirect(w, r, "/html/mainPage.html", http.StatusSeeOther)
 }
 
 func parseForm(w http.ResponseWriter, r *http.Request) (username string, pw string, error error) {
@@ -131,18 +132,18 @@ func parseForm(w http.ResponseWriter, r *http.Request) (username string, pw stri
 
 	// Parse HTML form from body
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		writeError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	uns, ok := r.Form["username"]
 	if !ok || len(uns) != 1 {
-		http.Error(w, "username missing, html input must have name 'username'", http.StatusUnprocessableEntity)
+		writeError(w, "username missing, html input must have name 'username'", http.StatusUnprocessableEntity)
 		return
 	}
 	pws, ok := r.Form["password"]
 	if !ok || len(pws) != 1 {
-		http.Error(w, "password missing, html input must have name 'password'", http.StatusUnprocessableEntity)
+		writeError(w, "password missing, html input must have name 'password'", http.StatusUnprocessableEntity)
 		return
 	}
 

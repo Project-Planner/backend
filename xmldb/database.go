@@ -26,9 +26,16 @@ type database struct {
 //Since each parsed element represents one resource, except the authentication files, each
 //of them gets equipped with a mutex lock.
 func New(config DBConfig) (database, error) {
-	//1. Step: Expand configuration file (e.g. constructing absolute paths
-	//		   from relative paths).
-	//―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+
+	// Set the "constants" here to make the config file simpler
+	config.AuthRelDir = "/auth"
+	config.UserRelDir = "/users"
+	config.CalendarRelDir = "/calendars"
+
+	//1. Step: Expanding configuration file (e.g. constructing absolute paths
+	//		   from relative paths)
+	//―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+
 	config.AuthDir = fmt.Sprintf("%s%s", config.DBDir, config.AuthRelDir)
 	config.UserDir = fmt.Sprintf("%s%s", config.DBDir, config.UserRelDir)
 	config.CalendarDir = fmt.Sprintf("%s%s", config.DBDir, config.CalendarRelDir)

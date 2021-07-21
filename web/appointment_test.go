@@ -39,7 +39,7 @@ func TestPutAppointmentHandler(t *testing.T) {
 		{
 			path:   "/c/appointments/" + testOwner + "/" + testOwner + "/" + myId,
 			authed: testOwner,
-			code:   http.StatusOK,
+			code:   http.StatusSeeOther,
 			urlValues: map[string]string{
 				"name": "My Birthday Party",
 				"desc": "I am partying",
@@ -60,7 +60,7 @@ func TestPutAppointmentHandler(t *testing.T) {
 		{
 			path:   "/c/appointments/" + testOwner + "/" + testOwner + "/" + myId,
 			authed: testOwner,
-			code:   http.StatusOK,
+			code:   http.StatusSeeOther,
 			urlValues: map[string]string{
 				"name": "My Birthday Party",
 				"desc": " ",
@@ -134,7 +134,7 @@ func TestPostAppointmentHandler(t *testing.T) {
 		{
 			path:      "/c/appointments/" + testOwner + "/" + testOwner,
 			authed:    testOwner,
-			code:      http.StatusCreated,
+			code:      http.StatusSeeOther,
 			urlValues: urlValues,
 			db: dbMock{setCalendar: func(s string, calendar model.Calendar) error {
 				setCalendar = calendar
