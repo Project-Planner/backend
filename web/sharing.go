@@ -91,7 +91,7 @@ func sharingHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if !found {
-		user.Items.Calendars = append(user.Items.Calendars, model.CalendarReference{Link: id})
+		user.Items.Calendars = append(user.Items.Calendars, model.CalendarReference{Link: id, Perm: perm})
 
 		if err = db.SetUser(userName, user); err != nil {
 			log.Println(err)

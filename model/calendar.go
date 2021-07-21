@@ -87,7 +87,7 @@ func (c *Calendar) Update(o Calendar) {
 }
 
 func (c Calendar) String() string {
-	aXML, _ := xml.Marshal(c)
+	aXML, _ := xml.MarshalIndent(c, "", "\t")
 	return string(aXML)
 }
 
