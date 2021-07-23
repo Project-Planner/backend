@@ -3,6 +3,7 @@ package web
 import (
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 )
 
@@ -22,6 +23,6 @@ func writeError(w http.ResponseWriter, msg string, code int) {
 		Status        string
 	}{DetailedError: msg, StatusCode: fmt.Sprint(code), Status: http.StatusText(code)})
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 }

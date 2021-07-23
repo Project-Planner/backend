@@ -138,7 +138,7 @@ func getUserCalendarsHandler(w http.ResponseWriter, r *http.Request) {
 
 	u, err := db.GetUser(userid)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		writeError(w, "", http.StatusInternalServerError)
 		return
 	}
