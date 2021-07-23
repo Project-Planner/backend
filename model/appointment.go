@@ -2,8 +2,10 @@ package model
 
 import (
 	"encoding/xml"
+	"fmt"
 	"github.com/google/uuid"
 	"net/http"
+	"strings"
 )
 
 type Appointment struct {
@@ -37,25 +39,25 @@ func NewAppointment(r *http.Request) (Appointment, error) {
 	if vs, ok := r.Form["startDate"]; !ok || len(vs) != 1 {
 		retErr = ErrReqFieldMissing
 	} else {
-		a.StartDate = Attribute{Val: vs[0]}
+		a.StartDate = Attribute{Val: transformDate(vs[0])}
 	}
 
 	if vs, ok := r.Form["endDate"]; !ok || len(vs) != 1 {
 		retErr = ErrReqFieldMissing
 	} else {
-		a.EndDate = Attribute{Val: vs[0]}
+		a.EndDate = Attribute{Val: transformDate(vs[0])}
 	}
 
 	if vs, ok := r.Form["startTime"]; !ok || len(vs) != 1 {
 		retErr = ErrReqFieldMissing
 	} else {
-		a.StartTime = Attribute{Val: vs[0]}
+		a.StartTime = Attribute{Val: transformDate(vs[0])}
 	}
 
 	if vs, ok := r.Form["endTime"]; !ok || len(vs) != 1 {
 		retErr = ErrReqFieldMissing
 	} else {
-		a.EndTime = Attribute{Val: vs[0]}
+		a.EndTime = Attribute{Val: transformDate(vs[0])}
 	}
 
 	if vs, ok := r.Form["desc"]; !ok || len(vs) != 1 {
@@ -108,4 +110,9 @@ func (a Appointment) String() string {
 
 func (a Appointment) GetID() string {
 	return a.ID
+}
+
+func transformDate(d string) string {
+	s := strings.Split(d, "-")
+	return fmt.Sprintf("%s.%s.%s", s[2], s[1], s[0])
 }
