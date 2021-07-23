@@ -115,7 +115,7 @@ func (a Appointment) GetID() string {
 func transformDate(d string) string {
 	s := strings.Split(d, "-")
 	if len(s) < 3 {
-		return "01.01.1970"
+		return ""
 	}
 	return fmt.Sprintf("%s.%s.%s", s[2], s[1], s[0])
 }
