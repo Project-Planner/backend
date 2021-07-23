@@ -51,7 +51,7 @@ func NewTask(r *http.Request) (Task, error) {
 	if vs, ok := r.Form["startTime"]; !ok || len(vs) != 1 {
 		retErr = ErrReqFieldMissing
 	} else {
-		t.StartTime = Attribute{Val: transformDate(vs[0])}
+		t.StartTime = Attribute{Val: vs[0]}
 	}
 
 	if vs, ok := r.Form["endDate"]; !ok || len(vs) != 1 {
@@ -63,7 +63,7 @@ func NewTask(r *http.Request) (Task, error) {
 	if vs, ok := r.Form["endTime"]; !ok || len(vs) != 1 {
 		retErr = ErrReqFieldMissing
 	} else {
-		t.Duetime = Attribute{Val: transformDate(vs[0])}
+		t.Duetime = Attribute{Val: vs[0]}
 	}
 
 	if vs, ok := r.Form["milestone-id"]; !ok || len(vs) != 1 {
