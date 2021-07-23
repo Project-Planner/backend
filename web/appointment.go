@@ -108,7 +108,7 @@ func finishItem(w http.ResponseWriter, r *http.Request, c model.Calendar) {
 		return
 	}
 
-	http.Redirect(w, r, "/me/c/" + c.ID.Val + "?" + r.URL.RawQuery, http.StatusSeeOther)
+	http.Redirect(w, r, "/html/mainPage.html", http.StatusSeeOther)
 }
 
 // itemIdx returns the index of the requested id in arr (by ID) and handles error reporting. Return -1 means,
