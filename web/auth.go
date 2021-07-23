@@ -124,6 +124,22 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	t, err := createToken(username)
+	if err != nil {
+		writeError(w, "", http.StatusInternalServerError)
+		log.Println(err)
+		return
+	}
+
+	c := http.Cookie{
+		Name:     authStr,
+		Value:    t,
+		Expires:  time.Now().Add(jwtDuration),
+		HttpOnly: true,
+		Path: conf.AuthedPathName,
+	}
+	http.SetCookie(w, &c)
+
 	http.Redirect(w, r, "/html/mainPage.html", http.StatusSeeOther)
 }
 

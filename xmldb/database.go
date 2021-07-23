@@ -134,8 +134,6 @@ func New(config DBConfig) (database, error) {
 		return database{}, err
 	}
 
-	fmt.Println(users)
-
 	return database{config, mutexes, logins, users, calendars}, nil
 }
 
