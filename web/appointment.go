@@ -99,7 +99,10 @@ func preparePutItem(w http.ResponseWriter, r *http.Request, err error) (model.Ca
 
 func finishItem(w http.ResponseWriter, r *http.Request, c model.Calendar) {
 	err := db.SetCalendar(c.ID.Val, c)
-	if err != nil {
+	if err == model.ErrNotFound {
+		writeError(w, "calendar " + c.ID.Val + " does not exist", http.StatusNotFound)
+		return
+	} else if err != nil {
 		log.Println(err)
 		writeError(w, "", http.StatusInternalServerError)
 		return
