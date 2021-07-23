@@ -390,6 +390,7 @@ func (db database) addCalendar(ownerID, calName string) error {
 	var cal = model.Calendar{
 		Name:  model.Attribute{Val: calName},
 		Owner: model.Attribute{Val: ownerID},
+		ID: model.Attribute{Val: fmt.Sprintf("%s/%s", ownerID, calName)},
 	}
 
 	var owner = db.users[ownerID]
