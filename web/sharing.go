@@ -73,11 +73,49 @@ func sharingHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	deleteFrom := func(us []model.Attribute, toDel model.Attribute) []model.Attribute {
+		var idxs []int
+		for i, v := range us {
+			if v.Val == toDel.Val {
+				idxs = append(idxs, i)
+			}
+		}
+		if len(idxs) == 0 {
+			return us
+		}
+
+		for i := len(idxs) - 1; i >= 0; i-- {
+			us[idxs[i]] = us[len(us) - 1]
+			us = us[:len(us) - 1]
+		}
+
+		return us
+	}
+
+	addUserReq := false
+
 	// give user the permission to either view or edit
+	userAttr := model.Attribute{Val: userName}
 	if perm == "view" {
-		c.Permissions.View.User = append(c.Permissions.View.User, model.Attribute{Val: userName})
+		c.Permissions.Edit.User = deleteFrom(c.Permissions.Edit.User, userAttr)
+		c.Permissions.View.User = append(c.Permissions.View.User, userAttr)
 	} else if perm == "edit" {
-		c.Permissions.Edit.User = append(c.Permissions.Edit.User, model.Attribute{Val: userName})
+		c.Permissions.Edit.User = append(c.Permissions.Edit.User, userAttr)
+	} else if perm == "none" {
+		c.Permissions.Edit.User = deleteFrom(c.Permissions.Edit.User, userAttr)
+		c.Permissions.View.User = deleteFrom(c.Permissions.View.User, userAttr)
+		// Deletes the calendar from the user file
+		idx := -1
+		for i, v := range user.Items.Calendars {
+			if v.Link == id {
+				idx = i
+				break
+			}
+		}
+		if idx != -1 {
+			user.Items.Calendars = append(user.Items.Calendars[:idx], user.Items.Calendars[idx+1:]...)
+		}
+		addUserReq = true
 	} else {
 		writeError(w, "permission not understood", http.StatusBadRequest)
 		return
@@ -88,11 +126,16 @@ func sharingHandler(w http.ResponseWriter, r *http.Request) {
 	for _, v := range user.Items.Calendars {
 		if v.Link == id {
 			found = true
+			break
 		}
 	}
-	if !found {
+	// add the calendar if it isn't already added and if it hasn't been removed by permissions none before
+	if !found && perm != "none" {
 		user.Items.Calendars = append(user.Items.Calendars, model.CalendarReference{Link: id, Perm: perm})
+		addUserReq = true
+	}
 
+	if addUserReq {
 		if err = db.SetUser(userName, user); err != nil {
 			log.Println(err)
 			writeError(w, "", http.StatusInternalServerError)
